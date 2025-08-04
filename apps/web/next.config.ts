@@ -1,7 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  experimental: {
+    // Disable turbopack for API routes to avoid runtime issues
+    turbo: {
+      resolveAlias: {
+        // Ensure proper module resolution
+        '@': './src',
+      },
+    },
+  },
 };
 
 export default nextConfig;
