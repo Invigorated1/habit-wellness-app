@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { startOfDay } from 'date-fns';
 
 export async function GET() {
   try {
@@ -25,13 +26,42 @@ export async function GET() {
       );
     }
 
-    // Get all habits for the authenticated user
+    const today = startOfDay(new Date());
+
+    // Get all habits for the authenticated user with today's entries
+    // This avoids N+1 queries by fetching related data in one query
     const habits = await prisma.habit.findMany({
       where: { userId: user.id },
+      include: {
+        entries: {
+          where: {
+            date: today,
+          },
+          take: 1,
+        },
+        _count: {
+          select: {
+            entries: {
+              where: {
+                completed: true,
+              },
+            },
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(habits);
+    // Transform the data to include today's completion status
+    const habitsWithStatus = habits.map(habit => ({
+      ...habit,
+      todayEntry: habit.entries[0] || null,
+      completedCount: habit._count.entries,
+      entries: undefined, // Remove the entries array from response
+      _count: undefined, // Remove the count object from response
+    }));
+
+    return NextResponse.json(habitsWithStatus);
   } catch (error) {
     console.error('Error fetching habits:', error);
     return NextResponse.json(
@@ -81,9 +111,24 @@ export async function POST(request: Request) {
         description: description || null,
         userId: user.id,
       },
+      include: {
+        _count: {
+          select: {
+            entries: true,
+          },
+        },
+      },
     });
 
-    return NextResponse.json(newHabit, { status: 201 });
+    // Return habit with additional fields for consistency
+    const habitWithStatus = {
+      ...newHabit,
+      todayEntry: null,
+      completedCount: 0,
+      _count: undefined,
+    };
+
+    return NextResponse.json(habitWithStatus, { status: 201 });
   } catch (error) {
     console.error('Error creating habit:', error);
     return NextResponse.json(

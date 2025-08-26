@@ -5,6 +5,7 @@ import { ClerkProviderWrapper } from "./providers/clerk-provider";
 import { PostHogProvider } from "./providers/PostHogProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Suspense } from "react";
+import { reportWebVitals } from '@/lib/performance';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,6 +21,9 @@ export const metadata: Metadata = {
   title: "Habit Wellness App",
   description: "Track your daily habits and build a better you",
 };
+
+// Export web vitals reporting
+export { reportWebVitals };
 
 export default function RootLayout({
   children,

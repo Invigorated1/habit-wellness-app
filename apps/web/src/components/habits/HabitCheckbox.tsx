@@ -36,11 +36,23 @@ export function HabitCheckbox({
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleToggle();
+    }
+  };
+
   return (
     <div className="flex items-center gap-3">
       <button
         onClick={handleToggle}
+        onKeyDown={handleKeyDown}
         disabled={isLoading}
+        role="checkbox"
+        aria-checked={isCompleted}
+        aria-disabled={isLoading}
+        aria-describedby={`habit-desc-${habit.id}`}
         className={`
           w-6 h-6 rounded-md border-2 transition-all duration-200
           ${isCompleted 
@@ -49,6 +61,7 @@ export function HabitCheckbox({
           }
           ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
           flex items-center justify-center
+          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
         `}
         aria-label={`Mark ${habit.name} as ${isCompleted ? 'incomplete' : 'complete'}`}
       >
@@ -58,6 +71,7 @@ export function HabitCheckbox({
             fill="none" 
             stroke="currentColor" 
             viewBox="0 0 24 24"
+            aria-hidden="true"
           >
             <path 
               strokeLinecap="round" 
@@ -74,11 +88,13 @@ export function HabitCheckbox({
           {habit.name}
         </h3>
         {habit.description && (
-          <p className="text-sm text-gray-600">{habit.description}</p>
+          <p id={`habit-desc-${habit.id}`} className="text-sm text-gray-600">
+            {habit.description}
+          </p>
         )}
       </div>
 
-      <div className="text-right">
+      <div className="text-right" aria-live="polite">
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Streak:</span>
           <span className={`text-sm font-semibold ${habit.streak > 0 ? 'text-blue-600' : 'text-gray-400'}`}>
@@ -87,6 +103,7 @@ export function HabitCheckbox({
         </div>
         {habit.longestStreak && habit.longestStreak > habit.streak && (
           <p className="text-xs text-gray-500">
+            <span className="sr-only">Personal best streak:</span>
             Best: {habit.longestStreak} days
           </p>
         )}
