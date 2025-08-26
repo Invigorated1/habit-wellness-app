@@ -1,24 +1,35 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import { prisma } from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // For now, return mock data - will be replaced with Prisma queries
-    const habits = [
-      {
-        id: 1,
-        name: 'Meditation',
-        description: 'Daily meditation practice',
-        streak: 5,
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: 2,
-        name: 'Exercise',
-        description: 'Daily workout routine',
-        streak: 3,
-        createdAt: new Date().toISOString(),
-      },
-    ];
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Get the user from our database using Clerk ID
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get all habits for the authenticated user
+    const habits = await prisma.habit.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+    });
 
     return NextResponse.json(habits);
   } catch (error) {
@@ -32,6 +43,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { name, description } = body;
 
@@ -42,14 +62,26 @@ export async function POST(request: Request) {
       );
     }
 
-    // Mock response - will be replaced with Prisma creation
-    const newHabit = {
-      id: Date.now(),
-      name,
-      description: description || '',
-      streak: 0,
-      createdAt: new Date().toISOString(),
-    };
+    // Get the user from our database using Clerk ID
+    const user = await prisma.user.findUnique({
+      where: { clerkId: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Create a new habit for the authenticated user
+    const newHabit = await prisma.habit.create({
+      data: {
+        name,
+        description: description || null,
+        userId: user.id,
+      },
+    });
 
     return NextResponse.json(newHabit, { status: 201 });
   } catch (error) {
