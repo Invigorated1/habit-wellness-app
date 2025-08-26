@@ -6,6 +6,8 @@ import { habitApi, Habit } from '@/lib/api/habits';
 import { HabitForm } from '@/components/habits/HabitForm';
 import { HabitCard } from '@/components/habits/HabitCard';
 import { CreateHabitInput, UpdateHabitInput } from '@/lib/validations/habit';
+import { trackEvent, AnalyticsEvents } from '@/lib/posthog';
+import * as Sentry from '@sentry/nextjs';
 
 export default function Dashboard() {
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -27,6 +29,8 @@ export default function Dashboard() {
         ...data,
         description: data.description || null,
         streak: 0,
+        longestStreak: 0,
+        lastCompletedAt: null,
         isActive: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -36,6 +40,14 @@ export default function Dashboard() {
       await mutate(
         async (habits) => {
           const createdHabit = await habitApi.create(data);
+          
+          // Track analytics
+          trackEvent(AnalyticsEvents.HABIT_CREATED, {
+            habit_id: createdHabit.id,
+            habit_name: createdHabit.name,
+            has_description: !!createdHabit.description,
+          });
+          
           return [...(habits || []), createdHabit];
         },
         {
@@ -48,42 +60,78 @@ export default function Dashboard() {
       
       setShowCreateForm(false);
     } catch (error) {
-      setCreateError(error instanceof Error ? error.message : 'Failed to create habit');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create habit';
+      setCreateError(errorMessage);
+      
+      // Log to Sentry
+      Sentry.captureException(error, {
+        tags: { action: 'create_habit' },
+        extra: { habitData: data },
+      });
     }
   };
 
   const handleUpdateHabit = async (id: string, data: UpdateHabitInput) => {
-    await mutate(
-      async (habits) => {
-        const updatedHabit = await habitApi.update(id, data);
-        return habits?.map(h => h.id === id ? updatedHabit : h) || [];
-      },
-      {
-        optimisticData: habits?.map(h => 
-          h.id === id 
-            ? { ...h, ...data, updatedAt: new Date().toISOString() }
-            : h
-        ),
-        rollbackOnError: true,
-        populateCache: true,
-        revalidate: false,
-      }
-    );
+    try {
+      await mutate(
+        async (habits) => {
+          const updatedHabit = await habitApi.update(id, data);
+          
+          // Track analytics
+          trackEvent(AnalyticsEvents.HABIT_UPDATED, {
+            habit_id: id,
+            updated_fields: Object.keys(data),
+          });
+          
+          return habits?.map(h => h.id === id ? updatedHabit : h) || [];
+        },
+        {
+          optimisticData: habits?.map(h => 
+            h.id === id 
+              ? { ...h, ...data, updatedAt: new Date().toISOString() }
+              : h
+          ),
+          rollbackOnError: true,
+          populateCache: true,
+          revalidate: false,
+        }
+      );
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { action: 'update_habit' },
+        extra: { habitId: id, updateData: data },
+      });
+      throw error;
+    }
   };
 
   const handleDeleteHabit = async (id: string) => {
-    await mutate(
-      async (habits) => {
-        await habitApi.delete(id);
-        return habits?.filter(h => h.id !== id) || [];
-      },
-      {
-        optimisticData: habits?.filter(h => h.id !== id),
-        rollbackOnError: true,
-        populateCache: true,
-        revalidate: false,
-      }
-    );
+    try {
+      await mutate(
+        async (habits) => {
+          await habitApi.delete(id);
+          
+          // Track analytics
+          trackEvent(AnalyticsEvents.HABIT_DELETED, {
+            habit_id: id,
+          });
+          
+          return habits?.filter(h => h.id !== id) || [];
+        },
+        {
+          optimisticData: habits?.filter(h => h.id !== id),
+          rollbackOnError: true,
+          populateCache: true,
+          revalidate: false,
+        }
+      );
+    } catch (error) {
+      Sentry.captureException(error, {
+        tags: { action: 'delete_habit' },
+        extra: { habitId: id },
+      });
+      throw error;
+    }
   };
 
   if (error) {
@@ -109,7 +157,12 @@ export default function Dashboard() {
         <h1 className="text-3xl font-bold">Habit Dashboard</h1>
         {!showCreateForm && (
           <button
-            onClick={() => setShowCreateForm(true)}
+            onClick={() => {
+              setShowCreateForm(true);
+              trackEvent(AnalyticsEvents.FEATURE_USED, {
+                feature: 'create_habit_form_opened',
+              });
+            }}
             className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             + New Habit
@@ -130,6 +183,9 @@ export default function Dashboard() {
             onCancel={() => {
               setShowCreateForm(false);
               setCreateError(null);
+              trackEvent(AnalyticsEvents.FEATURE_USED, {
+                feature: 'create_habit_form_cancelled',
+              });
             }}
           />
         </div>
