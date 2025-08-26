@@ -2,6 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProviderWrapper } from "./providers/clerk-provider";
+import { PostHogProvider } from "./providers/PostHogProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { Suspense } from "react";
+import { reportWebVitals } from '@/lib/performance';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,6 +22,9 @@ export const metadata: Metadata = {
   description: "Track your daily habits and build a better you",
 };
 
+// Export web vitals reporting
+export { reportWebVitals };
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +35,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ClerkProviderWrapper>{children}</ClerkProviderWrapper>
+        <ErrorBoundary>
+          <ClerkProviderWrapper>
+            <Suspense fallback={null}>
+              <PostHogProvider>
+                {children}
+              </PostHogProvider>
+            </Suspense>
+          </ClerkProviderWrapper>
+        </ErrorBoundary>
       </body>
     </html>
   );
