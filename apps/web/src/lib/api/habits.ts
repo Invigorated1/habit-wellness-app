@@ -5,10 +5,21 @@ export interface Habit {
   name: string;
   description: string | null;
   streak: number;
+  longestStreak: number;
+  lastCompletedAt: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
   userId: string;
+}
+
+export interface HabitEntry {
+  id: string;
+  date: string;
+  completed: boolean;
+  notes: string | null;
+  createdAt: string;
+  habitId: string;
 }
 
 export const habitApi = {
@@ -60,5 +71,36 @@ export const habitApi = {
       const error = await response.json();
       throw new Error(error.error || 'Failed to delete habit');
     }
+  },
+
+  // Toggle habit completion
+  toggleComplete: async (id: string, completed?: boolean, date?: string, notes?: string): Promise<{ habit: Habit; entry: HabitEntry }> => {
+    const response = await fetch(`/api/habits/${id}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completed, date, notes }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to toggle habit completion');
+    }
+
+    return response.json();
+  },
+
+  // Get habit completion status
+  getCompletion: async (id: string, date?: string): Promise<{ habit: Habit; entry: HabitEntry | null }> => {
+    const url = new URL(`/api/habits/${id}/complete`, window.location.origin);
+    if (date) url.searchParams.append('date', date);
+
+    const response = await fetch(url.toString());
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get habit completion');
+    }
+
+    return response.json();
   },
 };

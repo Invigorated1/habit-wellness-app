@@ -28,25 +28,28 @@ model User {
 }
 
 model Habit {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  streak      Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  streak          Int       @default(0)
+  longestStreak   Int       @default(0)
+  lastCompletedAt DateTime?
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
   
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  entries     HabitEntry[]
+  entries         HabitEntry[]
   
+  @@index([userId, isActive])
   @@map("habits")
 }
 
 model HabitEntry {
   id          String   @id @default(cuid())
-  date        DateTime @default(now())
+  date        DateTime @db.Date
   completed   Boolean  @default(false)
   notes       String?
   createdAt   DateTime @default(now())
@@ -55,5 +58,19 @@ model HabitEntry {
   habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
   
   @@unique([habitId, date])
+  @@index([date])
   @@map("habit_entries")
+}
+
+model CronJob {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  lastRunAt   DateTime?
+  status      String   @default("pending") // pending, running, completed, failed
+  result      Json?
+  error       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("cron_jobs")
 }
