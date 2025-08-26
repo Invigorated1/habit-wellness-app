@@ -18,10 +18,12 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^6.28.1",
+    "@habit-app/shared": "workspace:*",
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^6.13.0",
     "@sentry/nextjs": "^8.45.0",
     "date-fns": "^4.1.0",
+    "nanoid": "^5.0.9",
     "next": "15.4.5",
     "posthog-js": "^1.194.0",
     "prisma": "^6.13.0",

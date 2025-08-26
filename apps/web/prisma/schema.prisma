@@ -22,7 +22,11 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
-  habits    Habit[]
+  habits              Habit[]
+  sharedHabits        SharedHabit[]
+  notifications       Notification[]
+  pushSubscriptions   PushSubscription[]
+  notificationPrefs   NotificationPreference?
   
   @@map("users")
 }
@@ -42,6 +46,7 @@ model Habit {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   entries         HabitEntry[]
+  sharedHabits    SharedHabit[]
   
   @@index([userId, isActive])
   @@map("habits")
@@ -60,6 +65,80 @@ model HabitEntry {
   @@unique([habitId, date])
   @@index([date])
   @@map("habit_entries")
+}
+
+model SharedHabit {
+  id          String    @id @default(cuid())
+  shareType   String    // progress, achievement, milestone
+  message     String?
+  isPublic    Boolean   @default(false)
+  viewCount   Int       @default(0)
+  shareUrl    String    @unique
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  
+  habitId     String
+  habit       Habit     @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([shareUrl])
+  @@index([userId])
+  @@map("shared_habits")
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  type        String    // habit_reminder, streak_milestone, etc
+  title       String
+  body        String
+  data        Json?
+  read        Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model PushSubscription {
+  id          String    @id @default(cuid())
+  platform    String    // web, ios, android
+  token       String
+  deviceId    String?
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, token])
+  @@index([userId, active])
+  @@map("push_subscriptions")
+}
+
+model NotificationPreference {
+  id               String    @id @default(cuid())
+  habitReminders   Boolean   @default(true)
+  reminderTime     String    @default("09:00") // HH:MM format
+  streakMilestones Boolean   @default(true)
+  achievements     Boolean   @default(true)
+  weeklySummary    Boolean   @default(true)
+  pushEnabled      Boolean   @default(true)
+  emailEnabled     Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  
+  userId           String    @unique
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("notification_preferences")
 }
 
 model CronJob {
