@@ -1,8 +1,20 @@
 {
   "crons": [
     {
-      "path": "/api/cron/update-streaks",
-      "schedule": "0 5 * * *"
+      "path": "/api/cron/daily-streaks",
+      "schedule": "30 0 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-summary",
+      "schedule": "0 9 * * 1"
     }
-  ]
+  ],
+  "functions": {
+    "app/api/cron/daily-streaks/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/cron/weekly-summary/route.ts": {
+      "maxDuration": 60
+    }
+  }
 }
