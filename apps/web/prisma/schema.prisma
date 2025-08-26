@@ -12,6 +12,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Uncomment for SQLite testing:
+  // provider = "sqlite"
 }
 
 model User {
