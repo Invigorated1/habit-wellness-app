@@ -5,7 +5,8 @@ export const dynamic = "force-dynamic";
 
 export default function SignUpPage() {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  if (!publishableKey) {
+  const isValidKey = typeof publishableKey === 'string' && publishableKey.startsWith('pk_') && publishableKey.length > 10;
+  if (!isValidKey) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <p>Authentication is not configured.</p>
