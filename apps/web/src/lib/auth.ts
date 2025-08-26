@@ -13,7 +13,7 @@ export async function getOrCreateUser() {
     where: { clerkId },
   });
 
-  // If not, create them
+  // If not, create them (this handles cases where webhook hasn't fired)
   if (!user) {
     const clerkUser = await currentUser();
     
@@ -31,4 +31,20 @@ export async function getOrCreateUser() {
   }
 
   return user;
+}
+
+// Helper to get user ID without creating
+export async function getCurrentUserId() {
+  const { userId: clerkId } = await auth();
+  
+  if (!clerkId) {
+    return null;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { clerkId },
+    select: { id: true },
+  });
+
+  return user?.id || null;
 }
