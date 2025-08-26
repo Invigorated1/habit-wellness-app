@@ -1,5 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
+import { withRequestId } from '@/middleware/request-id';
+import { logger } from '@/lib/logger';
 
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -16,6 +18,9 @@ const isApiRoute = createRouteMatcher(['/api/(.*)']);
 const isCronRoute = createRouteMatcher(['/api/cron/(.*)']);
 
 export default clerkMiddleware((auth, req) => {
+  // Add request ID
+  const { response: responseWithId, requestId } = withRequestId(req);
+  
   const { userId } = auth();
   
   // Allow public routes

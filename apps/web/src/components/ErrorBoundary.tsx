@@ -6,6 +6,7 @@ import * as Sentry from '@sentry/nextjs';
 interface Props {
   children: React.ReactNode;
   fallback?: React.ComponentType<{ error: Error; resetError: () => void }>;
+  onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
 }
 
 interface State {
@@ -29,6 +30,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
       scope.setExtras(errorInfo);
       Sentry.captureException(error);
     });
+    
+    // Call onError callback if provided
+    this.props.onError?.(error, errorInfo);
   }
 
   resetError = () => {

@@ -10,6 +10,9 @@
     "lint": "next lint",
     "test": "vitest",
     "test:watch": "vitest --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
     "typecheck": "tsc --noEmit",
     "prisma:generate": "prisma generate",
     "db:push": "prisma db push",
@@ -52,7 +55,7 @@
     "eslint-config-next": "15.4.5",
     "jsdom": "^26.0.0",
     "tailwindcss": "^4",
-    "tsx": "^4.21.0",
+    "tsx": "^4.20.5",
     "typescript": "^5",
     "vitest": "^2.1.8"
   }
