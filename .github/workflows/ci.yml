@@ -198,6 +198,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run npm audit
+        run: pnpm audit --production
+        continue-on-error: true
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
@@ -213,10 +231,15 @@ jobs:
         with:
           sarif_file: 'trivy-results.sarif'
 
+      - name: Run GitLeaks secret scanning
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   quality-gates:
     name: Quality Gates
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, test, build]
+    needs: [lint, typecheck, test, build, security]
     if: always()
     steps:
       - name: Check quality gates
@@ -237,4 +260,7 @@ jobs:
             echo "❌ Build failed"
             exit 1
           fi
-          echo "✅ All quality gates passed!"
+          if [[ "${{ needs.security.result }}" != "success" ]]; then
+            echo "⚠️  Security scan found issues (non-blocking)"
+          fi
+          echo "✅ All required quality gates passed!"

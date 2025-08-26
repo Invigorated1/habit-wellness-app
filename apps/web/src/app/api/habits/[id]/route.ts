@@ -1,7 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
-import { updateHabitSchema } from '@/lib/validations/habit';
+import { updateHabitSchema } from '@habit-app/shared';
+import { 
+  validateRequest, 
+  parseBody, 
+  secureResponse, 
+  errorResponse,
+  sanitizeInput 
+} from '@/lib/api/validation';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function GET(
   request: Request,
@@ -53,39 +61,44 @@ export async function GET(
 }
 
 export async function PUT(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await auth();
+    // Check rate limit
+    const { userId } = auth();
+    const { success: rateLimitOk, response: rateLimitResponse } = await checkRateLimit(
+      request,
+      { type: 'user', identifier: userId || undefined }
+    );
+    if (!rateLimitOk) return rateLimitResponse!;
+
+    // Validate request
+    const validation = await validateRequest(request, { allowedMethods: ['PUT'] });
+    if (validation.error) return validation.error;
     
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return errorResponse('Unauthorized', 401);
     }
 
-    const body = await request.json();
-    
-    // Validate input
-    const validationResult = updateHabitSchema.safeParse(body);
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: validationResult.error.flatten() },
-        { status: 400 }
-      );
+    // Parse and validate body
+    const { data: body, error } = await parseBody(request, updateHabitSchema);
+    if (error) return error;
+
+    // Sanitize inputs
+    const sanitizedData: any = {};
+    if (body.name) sanitizedData.name = sanitizeInput(body.name);
+    if (body.description !== undefined) {
+      sanitizedData.description = body.description ? sanitizeInput(body.description) : null;
     }
+    if (body.isActive !== undefined) sanitizedData.isActive = body.isActive;
 
     const user = await prisma.user.findUnique({
       where: { clerkId: userId },
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return errorResponse('User not found', 404);
     }
 
     // Check if habit exists and belongs to user
@@ -97,25 +110,23 @@ export async function PUT(
     });
 
     if (!existingHabit) {
-      return NextResponse.json(
-        { error: 'Habit not found' },
-        { status: 404 }
-      );
+      return errorResponse('Habit not found', 404);
     }
 
     // Update the habit
     const updatedHabit = await prisma.habit.update({
-      where: { id: params.id },
-      data: validationResult.data,
+      where: { 
+        id: params.id,
+        // Double-check ownership in the update query
+        userId: user.id,
+      },
+      data: sanitizedData,
     });
 
-    return NextResponse.json(updatedHabit);
+    return secureResponse(updatedHabit);
   } catch (error) {
     console.error('Error updating habit:', error);
-    return NextResponse.json(
-      { error: 'Failed to update habit' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to update habit', 500);
   }
 }
 

@@ -1,17 +1,33 @@
-import { NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
 import { startOfDay } from 'date-fns';
+import { createHabitSchema } from '@habit-app/shared';
+import { 
+  validateRequest, 
+  parseBody, 
+  secureResponse, 
+  errorResponse,
+  sanitizeInput 
+} from '@/lib/api/validation';
+import { checkRateLimit } from '@/lib/rate-limit';
 
-export async function GET() {
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
+
+export async function GET(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    
+    // Check rate limit
+    const { success: rateLimitOk, response: rateLimitResponse } = await checkRateLimit(request);
+    if (!rateLimitOk) return rateLimitResponse!;
+
+    // Validate request
+    const validation = await validateRequest(request);
+    if (validation.error) return validation.error;
+
+    const { userId } = auth();
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return errorResponse('Unauthorized', 401);
     }
 
     // Get the user from our database using Clerk ID
@@ -20,10 +36,7 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return errorResponse('User not found', 404);
     }
 
     const today = startOfDay(new Date());
@@ -31,7 +44,13 @@ export async function GET() {
     // Get all habits for the authenticated user with today's entries
     // This avoids N+1 queries by fetching related data in one query
     const habits = await prisma.habit.findMany({
-      where: { userId: user.id },
+      where: { 
+        userId: user.id,
+        // Ensure user can only see their own habits
+        user: {
+          clerkId: userId,
+        },
+      },
       include: {
         entries: {
           where: {
@@ -61,35 +80,45 @@ export async function GET() {
       _count: undefined, // Remove the count object from response
     }));
 
-    return NextResponse.json(habitsWithStatus);
+    return secureResponse(habitsWithStatus);
   } catch (error) {
     console.error('Error fetching habits:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch habits' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to fetch habits', 500);
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { userId } = await auth();
-    
+    // Check rate limit with user-specific limits
+    const { userId } = auth();
+    const { success: rateLimitOk, response: rateLimitResponse } = await checkRateLimit(
+      request, 
+      { 
+        type: 'user',
+        identifier: userId || undefined,
+      }
+    );
+    if (!rateLimitOk) return rateLimitResponse!;
+
+    // Validate request
+    const validation = await validateRequest(request);
+    if (validation.error) return validation.error;
+
     if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return errorResponse('Unauthorized', 401);
     }
 
-    const body = await request.json();
-    const { name, description } = body;
+    // Parse and validate body
+    const { data: body, error } = await parseBody(request, createHabitSchema);
+    if (error) return error;
 
-    if (!name) {
-      return NextResponse.json(
-        { error: 'Name is required' },
-        { status: 400 }
-      );
+    // Sanitize inputs
+    const name = sanitizeInput(body.name);
+    const description = body.description ? sanitizeInput(body.description) : null;
+
+    // Additional validation
+    if (name.length < 1 || name.length > 100) {
+      return errorResponse('Name must be between 1 and 100 characters', 400);
     }
 
     // Get the user from our database using Clerk ID
@@ -98,17 +127,23 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return errorResponse('User not found', 404);
+    }
+
+    // Check habit limit (example: 50 habits per user)
+    const habitCount = await prisma.habit.count({
+      where: { userId: user.id, isActive: true },
+    });
+
+    if (habitCount >= 50) {
+      return errorResponse('Habit limit reached. Maximum 50 active habits allowed.', 400);
     }
 
     // Create a new habit for the authenticated user
     const newHabit = await prisma.habit.create({
       data: {
         name,
-        description: description || null,
+        description,
         userId: user.id,
       },
       include: {
@@ -128,12 +163,15 @@ export async function POST(request: Request) {
       _count: undefined,
     };
 
-    return NextResponse.json(habitWithStatus, { status: 201 });
+    return secureResponse(habitWithStatus, { status: 201 });
   } catch (error) {
     console.error('Error creating habit:', error);
-    return NextResponse.json(
-      { error: 'Failed to create habit' },
-      { status: 500 }
-    );
+    
+    // Check for specific Prisma errors
+    if (error instanceof Error && error.message.includes('P2002')) {
+      return errorResponse('A habit with this name already exists', 409);
+    }
+    
+    return errorResponse('Failed to create habit', 500);
   }
 }
