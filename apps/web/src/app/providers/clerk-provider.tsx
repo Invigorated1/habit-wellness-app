@@ -1,5 +1,6 @@
 'use client';
 import nextDynamic from 'next/dynamic';
+import { ClientErrorBoundary } from './error-boundary';
 const ClientClerkProvider = nextDynamic(
   () => import('@clerk/nextjs').then(m => m.ClerkProvider),
   { ssr: false }
@@ -12,14 +13,16 @@ export function ClerkProviderWrapper({ children }: { children: React.ReactNode }
     return <>{children}</>;
   }
   return (
-    <ClientClerkProvider
-      publishableKey={publishableKey}
-      signInUrl="/sign-in"
-      signUpUrl="/sign-up"
-      afterSignInUrl="/dashboard"
-      afterSignUpUrl="/dashboard"
-    >
-      {children}
-    </ClientClerkProvider>
+    <ClientErrorBoundary fallback={<>{children}</>}>
+      <ClientClerkProvider
+        publishableKey={publishableKey}
+        signInUrl="/sign-in"
+        signUpUrl="/sign-up"
+        afterSignInUrl="/dashboard"
+        afterSignUpUrl="/dashboard"
+      >
+        {children}
+      </ClientClerkProvider>
+    </ClientErrorBoundary>
   );
 }

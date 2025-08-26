@@ -1,5 +1,6 @@
 "use client";
 import nextDynamic from 'next/dynamic';
+import { ClientErrorBoundary } from '../providers/error-boundary';
 const SignIn = nextDynamic(() => import('@clerk/nextjs').then(m => m.SignIn), { ssr: false });
 export const dynamic = "force-dynamic";
 
@@ -14,8 +15,10 @@ export default function SignInPage() {
     );
   }
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <SignIn />
-    </div>
+    <ClientErrorBoundary fallback={<div className="flex items-center justify-center min-h-screen"><p>Authentication failed to initialize.</p></div>}>
+      <div className="flex items-center justify-center min-h-screen">
+        <SignIn />
+      </div>
+    </ClientErrorBoundary>
   );
 }
