@@ -5,11 +5,13 @@ import useSWR from 'swr';
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 interface Habit {
-  id: number;
+  id: string;
   name: string;
-  description: string;
+  description: string | null;
   streak: number;
+  isActive: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 export default function Dashboard() {
