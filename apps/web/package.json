@@ -14,7 +14,8 @@
     "db:migrate": "prisma migrate dev",
     "test": "vitest",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest --coverage"
+    "test:coverage": "vitest --coverage",
+    "diagnostics": "tsx scripts/diagnostics.ts"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.28.1",
@@ -40,6 +41,7 @@
     "happy-dom": "^18.0.1",
     "prisma": "^6.14.0",
     "tailwindcss": "^4",
+    "tsx": "^4.20.5",
     "typescript": "^5",
     "vitest": "^3.2.4"
   }

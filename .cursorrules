@@ -1,0 +1,72 @@
+# Habit Wellness App - AI Assistant Rules
+
+## Project Context
+You are working on a habit tracking web application. Current status: Backend complete (60% to MVP), needs UI components.
+
+## Tech Stack
+- Framework: Next.js 15 (App Router)
+- Language: TypeScript
+- Database: PostgreSQL (Neon) + Prisma ORM
+- Auth: Clerk
+- Styling: TailwindCSS v4
+- Testing: Vitest
+
+## Code Standards
+
+### API Routes
+Always use this pattern:
+```typescript
+export const GET = withErrorHandler(async (request: Request) => {
+  const user = await getOrCreateUser();
+  // Implementation
+  return successResponse(data);
+});
+```
+
+### Error Handling
+- Throw custom errors: `throw new NotFoundError('Message')`
+- Never use try-catch in routes (handled by wrapper)
+- Use ValidationError for input errors
+
+### Database Queries
+- Always filter by userId
+- Use Prisma's type-safe queries
+- Relations: Include what you need upfront
+
+### Logging
+- Use `logger.info()`, not console.log
+- Include context: `logger.info('Action', { userId, data })`
+
+### State Management
+- Use SWR for data fetching
+- Mutate on success: `mutate('/api/habits')`
+
+## File Structure
+- Pages: `/app/[page]/page.tsx`
+- API: `/app/api/[endpoint]/route.ts`
+- Components: `/components/[Component].tsx` (when created)
+- Utilities: `/lib/[utility].ts`
+
+## Current Priorities
+1. Create habit management UI
+2. Add daily tracking functionality
+3. Implement streak calculations
+4. Polish dashboard design
+
+## Don't
+- Don't create new files unless necessary
+- Don't add console.log statements
+- Don't skip validation
+- Don't expose other users' data
+- Don't use any TypeScript type
+
+## Testing
+- Write tests for new utilities
+- Test files: `__tests__/[name].test.ts`
+- Run: `pnpm test`
+
+## Remember
+- This is a monorepo (packages structure)
+- Auth is handled by middleware
+- Database models: User, Habit, HabitEntry
+- All times in UTC

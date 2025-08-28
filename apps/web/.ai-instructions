@@ -1,0 +1,59 @@
+# Local AI Instructions for apps/web
+
+## Current Working Directory Context
+You are in the Next.js web application within a monorepo.
+
+## Import Paths
+- Use `@/` for src imports: `import { prisma } from '@/lib/prisma'`
+- Components: `@/components/ComponentName`
+- Utilities: `@/lib/utilityName`
+
+## File Creation Rules
+1. API routes: `/src/app/api/[name]/route.ts`
+2. Pages: `/src/app/[name]/page.tsx`
+3. Components: `/src/components/[Name].tsx`
+4. Tests: `/src/**/__tests__/[name].test.ts`
+
+## Active Development Tasks
+- [ ] Create AddHabitForm component
+- [ ] Create HabitCard component with edit/delete
+- [ ] Add daily checkbox to HabitCard
+- [ ] Create habit entries API endpoint
+- [ ] Update dashboard to use new components
+
+## Component Template
+```tsx
+'use client';
+
+import { useState } from 'react';
+import useSWR, { mutate } from 'swr';
+
+export function ComponentName() {
+  // Use SWR for data fetching
+  const { data, error, isLoading } = useSWR('/api/endpoint');
+  
+  // Local state for UI
+  const [state, setState] = useState();
+  
+  // Actions should mutate SWR cache
+  const handleAction = async () => {
+    await fetch('/api/endpoint', { method: 'POST' });
+    mutate('/api/endpoint');
+  };
+  
+  return <div>Component</div>;
+}
+```
+
+## Tailwind Classes to Use
+- Cards: `border border-gray-200 rounded-lg p-4`
+- Buttons: `px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600`
+- Forms: `space-y-4`
+- Inputs: `w-full px-3 py-2 border border-gray-300 rounded-md`
+
+## Remember
+- This is App Router, not Pages Router
+- Always use 'use client' for interactive components
+- API routes are already protected by middleware
+- Use the error classes from @/lib/errors
+- Logger is available from @/lib/logger
