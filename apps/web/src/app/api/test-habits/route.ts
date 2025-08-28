@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateUser } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { withErrorHandler, successResponse } from '@/lib/api-handler';
 
 // This is a test endpoint to verify habits CRUD operations
-export async function GET() {
-  try {
-    const user = await getOrCreateUser();
+export const GET = withErrorHandler(async () => {
+  const user = await getOrCreateUser();
+  
+  logger.info('Running habit CRUD tests', { userId: user.id });
     
     // Create a test habit
     const testHabit = await prisma.habit.create({
@@ -35,8 +38,9 @@ export async function GET() {
       where: { id: testHabit.id },
     });
 
-    return NextResponse.json({
-      success: true,
+    logger.info('All CRUD tests passed', { userId: user.id });
+    
+    return successResponse({
       message: 'All CRUD operations tested successfully',
       user: {
         id: user.id,
@@ -50,15 +54,4 @@ export async function GET() {
         deleted: true,
       },
     });
-  } catch (error) {
-    console.error('Test failed:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Test failed',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
-  }
-}
+});

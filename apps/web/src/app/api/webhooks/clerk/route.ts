@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { Webhook } from 'svix';
 import { WebhookEvent } from '@clerk/nextjs/server';
 import { prisma } from '@/lib/prisma';
+import { logger } from '@/lib/logger';
 
 export async function POST(req: Request) {
   // Get the headers
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
       "svix-signature": svix_signature,
     }) as WebhookEvent;
   } catch (err) {
-    console.error('Error verifying webhook:', err);
+    logger.error('Error verifying webhook', { error: err });
     return new Response('Error occured', {
       status: 400
     });
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
         },
       });
     } catch (error) {
-      console.error('Error syncing user:', error);
+      logger.error('Error syncing user', { error, userId: id });
       return new Response('Error syncing user', { status: 500 });
     }
   }
@@ -80,7 +81,7 @@ export async function POST(req: Request) {
         where: { clerkId: id },
       });
     } catch (error) {
-      console.error('Error deleting user:', error);
+      logger.error('Error deleting user', { error, userId: id });
       // User might not exist in our DB, that's okay
     }
   }

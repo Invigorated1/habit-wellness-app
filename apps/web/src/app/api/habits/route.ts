@@ -1,11 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateUser } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { validateCreateHabit } from '@/lib/validations/habit';
+import { withErrorHandler, successResponse } from '@/lib/api-handler';
+import { UnauthorizedError, ValidationError } from '@/lib/errors';
 
-export async function GET() {
-  try {
-    // Get the current user
-    const user = await getOrCreateUser();
+export const GET = withErrorHandler(async () => {
+  // Get the current user
+  const user = await getOrCreateUser();
+  
+  logger.info('Fetching habits', { userId: user.id });
 
     // Fetch all habits for the user
     const habits = await prisma.habit.findMany({
@@ -36,51 +41,39 @@ export async function GET() {
       updatedAt: habit.updatedAt.toISOString(),
     }));
 
-    return NextResponse.json(transformedHabits);
-  } catch (error) {
-    console.error('Error fetching habits:', error);
-    
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch habits' },
-      { status: 500 }
-    );
+    logger.info('Habits fetched successfully', { userId: user.id, count: habits.length });
+    return successResponse(transformedHabits);
+});
+
+export const POST = withErrorHandler(async (request: Request) => {
+  // Get the current user
+  const user = await getOrCreateUser();
+  
+  const body = await request.json();
+  
+  logger.info('Creating habit', { userId: user.id, body });
+  
+  // Validate input
+  const validation = validateCreateHabit(body);
+  if (!validation.isValid) {
+    throw new ValidationError(validation.errors);
   }
-}
-
-export async function POST(request: Request) {
-  try {
-    // Get the current user
-    const user = await getOrCreateUser();
-    
-    const body = await request.json();
-    const { name, description } = body;
-
-    // Validate input
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Name is required and must be a non-empty string' },
-        { status: 400 }
-      );
-    }
+  
+  const { name, description } = validation.data!;
 
     // Create the habit
     const newHabit = await prisma.habit.create({
       data: {
-        name: name.trim(),
-        description: description?.trim() || null,
+        name,
+        description,
         userId: user.id,
       },
     });
 
+    logger.info('Habit created successfully', { userId: user.id, habitId: newHabit.id });
+    
     // Return the created habit
-    return NextResponse.json({
+    return successResponse({
       id: newHabit.id,
       name: newHabit.name,
       description: newHabit.description,
@@ -88,21 +81,5 @@ export async function POST(request: Request) {
       isActive: newHabit.isActive,
       createdAt: newHabit.createdAt.toISOString(),
       updatedAt: newHabit.updatedAt.toISOString(),
-    }, { status: 201 });
-    
-  } catch (error) {
-    console.error('Error creating habit:', error);
-    
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to create habit' },
-      { status: 500 }
-    );
-  }
-}
+    }, 201);
+});

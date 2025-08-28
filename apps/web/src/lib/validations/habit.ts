@@ -23,11 +23,13 @@ export function validateCreateHabit(data: any): {
   const errors: string[] = [];
 
   // Validate name
-  if (!data.name || typeof data.name !== 'string') {
-    errors.push('Name is required and must be a string');
+  if (data.name === undefined || data.name === null) {
+    errors.push('Name is required');
+  } else if (typeof data.name !== 'string') {
+    errors.push('Name must be a string');
   } else if (data.name.trim().length === 0) {
     errors.push('Name cannot be empty');
-  } else if (data.name.length > 100) {
+  } else if (data.name.trim().length > 100) {
     errors.push('Name must be less than 100 characters');
   }
 

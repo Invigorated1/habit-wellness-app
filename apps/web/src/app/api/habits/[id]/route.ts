@@ -1,16 +1,21 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateUser } from '@/lib/auth';
+import { logger } from '@/lib/logger';
+import { validateUpdateHabit, UpdateHabitInput } from '@/lib/validations/habit';
+import { withErrorHandler, successResponse } from '@/lib/api-handler';
+import { NotFoundError, ValidationError } from '@/lib/errors';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
 }
 
 // GET a single habit
-export async function GET(request: Request, { params }: RouteParams) {
-  try {
-    const { id } = await params;
-    const user = await getOrCreateUser();
+export const GET = withErrorHandler(async (request: Request, { params }: RouteParams) => {
+  const { id } = await params;
+  const user = await getOrCreateUser();
+  
+  logger.info('Fetching habit', { userId: user.id, habitId: id });
 
     const habit = await prisma.habit.findFirst({
       where: {
@@ -28,13 +33,10 @@ export async function GET(request: Request, { params }: RouteParams) {
     });
 
     if (!habit) {
-      return NextResponse.json(
-        { error: 'Habit not found' },
-        { status: 404 }
-      );
+      throw new NotFoundError('Habit not found');
     }
 
-    return NextResponse.json({
+    return successResponse({
       id: habit.id,
       name: habit.name,
       description: habit.description,
@@ -49,29 +51,15 @@ export async function GET(request: Request, { params }: RouteParams) {
         notes: entry.notes,
       })),
     });
-  } catch (error) {
-    console.error('Error fetching habit:', error);
-    
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch habit' },
-      { status: 500 }
-    );
-  }
-}
+});
 
 // UPDATE a habit
-export async function PATCH(request: Request, { params }: RouteParams) {
-  try {
-    const { id } = await params;
-    const user = await getOrCreateUser();
-    const body = await request.json();
+export const PATCH = withErrorHandler(async (request: Request, { params }: RouteParams) => {
+  const { id } = await params;
+  const user = await getOrCreateUser();
+  const body = await request.json();
+  
+  logger.info('Updating habit', { userId: user.id, habitId: id, body });
 
     // First check if the habit belongs to the user
     const existingHabit = await prisma.habit.findFirst({
@@ -82,48 +70,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     });
 
     if (!existingHabit) {
-      return NextResponse.json(
-        { error: 'Habit not found' },
-        { status: 404 }
-      );
+      throw new NotFoundError('Habit not found');
     }
 
     // Validate input
-    const updates: any = {};
+    const validation = validateUpdateHabit(body);
+    if (!validation.isValid) {
+      throw new ValidationError(validation.errors);
+    }
     
-    if ('name' in body) {
-      if (!body.name || typeof body.name !== 'string' || body.name.trim().length === 0) {
-        return NextResponse.json(
-          { error: 'Name must be a non-empty string' },
-          { status: 400 }
-        );
-      }
-      updates.name = body.name.trim();
-    }
-
-    if ('description' in body) {
-      updates.description = body.description?.trim() || null;
-    }
-
-    if ('isActive' in body) {
-      if (typeof body.isActive !== 'boolean') {
-        return NextResponse.json(
-          { error: 'isActive must be a boolean' },
-          { status: 400 }
-        );
-      }
-      updates.isActive = body.isActive;
-    }
-
-    if ('streak' in body) {
-      if (typeof body.streak !== 'number' || body.streak < 0) {
-        return NextResponse.json(
-          { error: 'Streak must be a non-negative number' },
-          { status: 400 }
-        );
-      }
-      updates.streak = body.streak;
-    }
+    const updates: UpdateHabitInput = validation.data!;
 
     // Update the habit
     const updatedHabit = await prisma.habit.update({
@@ -131,7 +87,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data: updates,
     });
 
-    return NextResponse.json({
+    logger.info('Habit updated successfully', { userId: user.id, habitId: id });
+    
+    return successResponse({
       id: updatedHabit.id,
       name: updatedHabit.name,
       description: updatedHabit.description,
@@ -140,66 +98,33 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       createdAt: updatedHabit.createdAt.toISOString(),
       updatedAt: updatedHabit.updatedAt.toISOString(),
     });
-  } catch (error) {
-    console.error('Error updating habit:', error);
-    
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to update habit' },
-      { status: 500 }
-    );
-  }
-}
+});
 
 // DELETE a habit
-export async function DELETE(request: Request, { params }: RouteParams) {
-  try {
-    const { id } = await params;
-    const user = await getOrCreateUser();
+export const DELETE = withErrorHandler(async (request: Request, { params }: RouteParams) => {
+  const { id } = await params;
+  const user = await getOrCreateUser();
+  
+  logger.info('Deleting habit', { userId: user.id, habitId: id });
 
-    // First check if the habit belongs to the user
-    const existingHabit = await prisma.habit.findFirst({
-      where: {
-        id,
-        userId: user.id,
-      },
-    });
+  // First check if the habit belongs to the user
+  const existingHabit = await prisma.habit.findFirst({
+    where: {
+      id,
+      userId: user.id,
+    },
+  });
 
-    if (!existingHabit) {
-      return NextResponse.json(
-        { error: 'Habit not found' },
-        { status: 404 }
-      );
-    }
-
-    // Delete the habit (cascading delete will remove entries)
-    await prisma.habit.delete({
-      where: { id },
-    });
-
-    return NextResponse.json(
-      { message: 'Habit deleted successfully' },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Error deleting habit:', error);
-    
-    if (error instanceof Error && error.message === 'Unauthorized') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to delete habit' },
-      { status: 500 }
-    );
+  if (!existingHabit) {
+    throw new NotFoundError('Habit not found');
   }
-}
+
+  // Delete the habit (cascading delete will remove entries)
+  await prisma.habit.delete({
+    where: { id },
+  });
+  
+  logger.info('Habit deleted successfully', { userId: user.id, habitId: id });
+
+  return successResponse({ message: 'Habit deleted successfully' });
+});
