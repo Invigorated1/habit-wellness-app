@@ -6,6 +6,8 @@ import { useOnboardingStore } from '@/stores/onboarding';
 import { Button } from '@/components/ui/button';
 import archetypeConfig from '@/lib/archetype/config.json';
 import confetti from 'canvas-confetti';
+import { AsciiArt } from '@/components/AsciiArt';
+import { getHouseAscii } from '@/ascii';
 
 interface ArchetypeRevealProps {
   onComplete: () => void;
@@ -55,9 +57,13 @@ export function ArchetypeReveal({ onComplete }: ArchetypeRevealProps) {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-              className="text-8xl"
+              className="flex justify-center"
             >
-              {houseProfile.emoji}
+              <AsciiArt
+                ascii={getHouseAscii(assignedHouse || 'MONK')}
+                variant="display"
+                ariaLabel={`${houseProfile.name} archetype`}
+              />
             </motion.div>
 
             {/* House Name */}
