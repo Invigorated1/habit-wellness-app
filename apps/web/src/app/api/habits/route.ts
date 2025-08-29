@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateUser } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { validateCreateHabit } from '@/lib/validations/habit';
+import { CreateHabitSchema, HabitResponseSchema, SuccessResponseSchema } from '@/lib/validations/habit.zod';
 import { withErrorHandler, successResponse } from '@/lib/api-handler';
 import { UnauthorizedError, ValidationError } from '@/lib/errors';
+import { z } from 'zod';
 
 export const GET = withErrorHandler(async () => {
   // Get the current user
@@ -53,13 +54,9 @@ export const POST = withErrorHandler(async (request: Request) => {
   
   logger.info('Creating habit', { userId: user.id, body });
   
-  // Validate input
-  const validation = validateCreateHabit(body);
-  if (!validation.isValid) {
-    throw new ValidationError(validation.errors);
-  }
-  
-  const { name, description } = validation.data!;
+  // Validate input with Zod
+  const validatedData = CreateHabitSchema.parse(body);
+  const { name, description } = validatedData;
 
     // Create the habit
     const newHabit = await prisma.habit.create({

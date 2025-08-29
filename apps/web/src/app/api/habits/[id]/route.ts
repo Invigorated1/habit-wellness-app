@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getOrCreateUser } from '@/lib/auth';
 import { logger } from '@/lib/logger';
-import { validateUpdateHabit, UpdateHabitInput } from '@/lib/validations/habit';
+import { UpdateHabitSchema, HabitIdSchema, HabitWithEntriesSchema } from '@/lib/validations/habit.zod';
 import { withErrorHandler, successResponse } from '@/lib/api-handler';
 import { NotFoundError, ValidationError } from '@/lib/errors';
+import { z } from 'zod';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -15,11 +16,14 @@ export const GET = withErrorHandler(async (request: Request, { params }: RoutePa
   const { id } = await params;
   const user = await getOrCreateUser();
   
-  logger.info('Fetching habit', { userId: user.id, habitId: id });
+  // Validate ID format
+  const validatedId = HabitIdSchema.parse(id);
+  
+  logger.info('Fetching habit', { userId: user.id, habitId: validatedId });
 
     const habit = await prisma.habit.findFirst({
       where: {
-        id,
+        id: validatedId,
         userId: user.id,
       },
       include: {
@@ -59,12 +63,16 @@ export const PATCH = withErrorHandler(async (request: Request, { params }: Route
   const user = await getOrCreateUser();
   const body = await request.json();
   
-  logger.info('Updating habit', { userId: user.id, habitId: id, body });
+  // Validate ID and body
+  const validatedId = HabitIdSchema.parse(id);
+  const validatedData = UpdateHabitSchema.parse(body);
+  
+  logger.info('Updating habit', { userId: user.id, habitId: validatedId, body: validatedData });
 
     // First check if the habit belongs to the user
     const existingHabit = await prisma.habit.findFirst({
       where: {
-        id,
+        id: validatedId,
         userId: user.id,
       },
     });
@@ -73,18 +81,10 @@ export const PATCH = withErrorHandler(async (request: Request, { params }: Route
       throw new NotFoundError('Habit not found');
     }
 
-    // Validate input
-    const validation = validateUpdateHabit(body);
-    if (!validation.isValid) {
-      throw new ValidationError(validation.errors);
-    }
-    
-    const updates: UpdateHabitInput = validation.data!;
-
     // Update the habit
     const updatedHabit = await prisma.habit.update({
-      where: { id },
-      data: updates,
+      where: { id: validatedId },
+      data: validatedData,
     });
 
     logger.info('Habit updated successfully', { userId: user.id, habitId: id });
@@ -105,12 +105,15 @@ export const DELETE = withErrorHandler(async (request: Request, { params }: Rout
   const { id } = await params;
   const user = await getOrCreateUser();
   
-  logger.info('Deleting habit', { userId: user.id, habitId: id });
+  // Validate ID
+  const validatedId = HabitIdSchema.parse(id);
+  
+  logger.info('Deleting habit', { userId: user.id, habitId: validatedId });
 
   // First check if the habit belongs to the user
   const existingHabit = await prisma.habit.findFirst({
     where: {
-      id,
+      id: validatedId,
       userId: user.id,
     },
   });
@@ -121,7 +124,7 @@ export const DELETE = withErrorHandler(async (request: Request, { params }: Rout
 
   // Delete the habit (cascading delete will remove entries)
   await prisma.habit.delete({
-    where: { id },
+    where: { id: validatedId },
   });
   
   logger.info('Habit deleted successfully', { userId: user.id, habitId: id });

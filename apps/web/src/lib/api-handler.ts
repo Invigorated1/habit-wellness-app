@@ -6,6 +6,7 @@ import { withRateLimit } from './rate-limit';
 import { auth } from '@clerk/nextjs/server';
 import { extractRequestInfo, logRequest, logResponse } from './request-logger';
 import { performanceMonitor } from './performance';
+import * as Sentry from '@sentry/nextjs';
 
 type Handler = (...args: any[]) => Promise<NextResponse>;
 
@@ -34,6 +35,11 @@ export function withErrorHandler(handler: Handler, options: HandlerOptions = {})
         const { userId } = await auth();
         requestInfo.userId = userId;
         logRequest(requestInfo);
+        
+        // Set Sentry user context
+        if (userId) {
+          Sentry.setUser({ id: userId });
+        }
       }
       // Rate limiting
       if (rateLimit) {
@@ -79,6 +85,19 @@ export function withErrorHandler(handler: Handler, options: HandlerOptions = {})
         stack: error instanceof Error ? error.stack : undefined,
         path: args[0]?.url || 'unknown',
       });
+      
+      // Send to Sentry if it's not an operational error
+      if (!(error instanceof AppError) || !error.isOperational) {
+        Sentry.captureException(error, {
+          contexts: {
+            request: requestInfo,
+          },
+          extra: {
+            url: request.url,
+            method: request.method,
+          },
+        });
+      }
 
       // Handle known errors
       if (error instanceof AppError) {
