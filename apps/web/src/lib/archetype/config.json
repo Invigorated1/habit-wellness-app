@@ -1,0 +1,267 @@
+{
+  "houses": [
+    {
+      "house": "MONK",
+      "name": "The Monk",
+      "emoji": "🧘",
+      "lore": "Masters of inner peace, Monks find clarity through meditation and mindful breathing. Their path is one of deep introspection and spiritual growth.",
+      "shortDescription": "Calm clarity through meditation",
+      "traits": {
+        "primary": ["BIG5_OPENNESS", "WELLNESS_SPIRITUALITY"],
+        "secondary": ["BIG5_AGREEABLENESS"]
+      },
+      "goals": {
+        "primary": ["CALM", "MINDFULNESS", "CLARITY"],
+        "secondary": ["STRESS_RELIEF", "EMOTIONAL_REGULATION"]
+      },
+      "practices": {
+        "core": ["vipassana_scan_30min", "breath_box_10min"],
+        "recommended": ["loving_kindness_20min", "body_scan_sleep"],
+        "advanced": ["vipassana_scan_60min", "breath_retention"]
+      },
+      "schedule": {
+        "morning": ["vipassana_scan_30min"],
+        "evening": ["breath_box_10min", "gratitude_reflection"]
+      }
+    },
+    {
+      "house": "WARRIOR_MONK",
+      "name": "The Warrior-Monk",
+      "emoji": "⚔️",
+      "lore": "Balancing physical prowess with mental discipline, Warrior-Monks forge their bodies and minds into unified instruments of will.",
+      "shortDescription": "Discipline through movement and meditation",
+      "traits": {
+        "primary": ["BIG5_CONSCIENTIOUSNESS", "WELLNESS_PHYSICALITY"],
+        "secondary": ["WELLNESS_DISCIPLINE"]
+      },
+      "goals": {
+        "primary": ["STRENGTH", "DISCIPLINE", "FOCUS"],
+        "secondary": ["ENDURANCE", "BALANCE"]
+      },
+      "practices": {
+        "core": ["mobility_flow_15min", "power_breath_10min"],
+        "recommended": ["calisthenics_pyramid", "cold_exposure"],
+        "advanced": ["movement_meditation_30min", "breath_holds"]
+      },
+      "schedule": {
+        "morning": ["power_breath_10min", "mobility_flow_15min"],
+        "midday": ["calisthenics_pyramid"],
+        "evening": ["stretch_restore_10min"]
+      }
+    },
+    {
+      "house": "SAGE",
+      "name": "The Sage",
+      "emoji": "📚",
+      "lore": "Seekers of wisdom and understanding, Sages cultivate knowledge through reflection, study, and contemplative practices.",
+      "shortDescription": "Wisdom through reflection and study",
+      "traits": {
+        "primary": ["BIG5_OPENNESS", "BIG5_CONSCIENTIOUSNESS"],
+        "secondary": ["WELLNESS_SPIRITUALITY"]
+      },
+      "goals": {
+        "primary": ["CLARITY", "PURPOSE", "CREATIVITY"],
+        "secondary": ["FOCUS", "MINDFULNESS"]
+      },
+      "practices": {
+        "core": ["reflection_journal_15min", "contemplation_walk"],
+        "recommended": ["wisdom_reading_20min", "teaching_prep"],
+        "advanced": ["philosophical_inquiry", "mentor_session"]
+      },
+      "schedule": {
+        "morning": ["contemplation_walk"],
+        "evening": ["reflection_journal_15min", "wisdom_reading_20min"]
+      }
+    },
+    {
+      "house": "ARTISAN",
+      "name": "The Artisan",
+      "emoji": "🎨",
+      "lore": "Creative souls who find meditation in movement and expression, Artisans blend mindfulness with artistic practice.",
+      "shortDescription": "Creativity through mindful practice",
+      "traits": {
+        "primary": ["BIG5_OPENNESS", "BIG5_EXTRAVERSION"],
+        "secondary": ["WELLNESS_SPIRITUALITY"]
+      },
+      "goals": {
+        "primary": ["CREATIVITY", "FLEXIBILITY", "CONNECTION"],
+        "secondary": ["STRESS_RELIEF", "CONFIDENCE"]
+      },
+      "practices": {
+        "core": ["creative_flow_20min", "expressive_movement"],
+        "recommended": ["dance_meditation", "art_therapy"],
+        "advanced": ["improv_practice", "creative_teaching"]
+      },
+      "schedule": {
+        "morning": ["creative_flow_20min"],
+        "midday": ["expressive_movement"],
+        "evening": ["art_therapy"]
+      }
+    },
+    {
+      "house": "OPERATIVE",
+      "name": "The Operative",
+      "emoji": "🕵️",
+      "lore": "Masters of precision and systematic practice, Operatives achieve excellence through methodical training and focused execution.",
+      "shortDescription": "Excellence through precision and routine",
+      "traits": {
+        "primary": ["BIG5_CONSCIENTIOUSNESS", "WELLNESS_DISCIPLINE"],
+        "secondary": ["BIG5_NEUROTICISM"]
+      },
+      "goals": {
+        "primary": ["FOCUS", "PRODUCTIVITY", "DISCIPLINE"],
+        "secondary": ["STRESS_RELIEF", "CONSISTENCY"]
+      },
+      "practices": {
+        "core": ["precision_breath_10min", "tactical_meditation"],
+        "recommended": ["skill_drills", "performance_review"],
+        "advanced": ["flow_state_training", "elite_protocols"]
+      },
+      "schedule": {
+        "morning": ["precision_breath_10min", "tactical_meditation"],
+        "midday": ["skill_drills"],
+        "evening": ["performance_review"]
+      }
+    },
+    {
+      "house": "COUNCILOR",
+      "name": "The Councilor",
+      "emoji": "👥",
+      "lore": "Natural leaders who cultivate wisdom for the benefit of others, Councilors practice strategic thinking and empathic connection.",
+      "shortDescription": "Leadership through strategic clarity",
+      "traits": {
+        "primary": ["BIG5_EXTRAVERSION", "BIG5_AGREEABLENESS"],
+        "secondary": ["BIG5_CONSCIENTIOUSNESS"]
+      },
+      "goals": {
+        "primary": ["CLARITY", "CONNECTION", "PURPOSE"],
+        "secondary": ["CONFIDENCE", "EMOTIONAL_REGULATION"]
+      },
+      "practices": {
+        "core": ["strategic_visualization", "empathy_meditation"],
+        "recommended": ["leadership_reflection", "team_energy_scan"],
+        "advanced": ["council_preparation", "wisdom_transmission"]
+      },
+      "schedule": {
+        "morning": ["strategic_visualization"],
+        "midday": ["empathy_meditation"],
+        "evening": ["leadership_reflection"]
+      }
+    }
+  ],
+  "classes": [
+    {
+      "class": "VIPASSANA_FIRST",
+      "house": "MONK",
+      "name": "Vipassana Path",
+      "description": "Deep insight meditation as primary practice",
+      "focusAreas": ["body awareness", "sensation observation", "equanimity"],
+      "defaults": {
+        "morning": "vipassana_scan_30min",
+        "evening": "breath_awareness_10min"
+      }
+    },
+    {
+      "class": "BREATH_FIRST",
+      "house": "MONK",
+      "name": "Breath Path",
+      "description": "Pranayama and breath work as gateway to meditation",
+      "focusAreas": ["breath control", "energy regulation", "calm"],
+      "defaults": {
+        "morning": "breath_box_10min",
+        "evening": "vipassana_scan_20min"
+      }
+    },
+    {
+      "class": "MOBILITY_FOCUS",
+      "house": "WARRIOR_MONK",
+      "name": "Flow Warrior",
+      "description": "Emphasis on movement, flexibility, and flow states",
+      "focusAreas": ["mobility", "flexibility", "movement meditation"],
+      "defaults": {
+        "morning": "mobility_flow_15min",
+        "midday": "movement_meditation_20min"
+      }
+    },
+    {
+      "class": "POWER_FOCUS",
+      "house": "WARRIOR_MONK",
+      "name": "Strength Warrior",
+      "description": "Building power through disciplined training",
+      "focusAreas": ["strength", "power", "explosive movement"],
+      "defaults": {
+        "morning": "power_breath_10min",
+        "midday": "calisthenics_pyramid"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "monk_high_openness_calm",
+      "conditions": [
+        {"type": "trait", "key": "BIG5_OPENNESS", "operator": "gte", "value": 0.7},
+        {"type": "goal", "key": "CALM", "operator": "contains", "value": true}
+      ],
+      "outcome": {"house": "MONK", "class": "VIPASSANA_FIRST", "confidenceBoost": 0.2},
+      "weight": 0.8,
+      "priority": 1
+    },
+    {
+      "id": "warrior_monk_discipline_strength",
+      "conditions": [
+        {"type": "trait", "key": "BIG5_CONSCIENTIOUSNESS", "operator": "gte", "value": 0.7},
+        {"type": "goal", "key": "STRENGTH", "operator": "contains", "value": true}
+      ],
+      "outcome": {"house": "WARRIOR_MONK", "class": "POWER_FOCUS", "confidenceBoost": 0.15},
+      "weight": 0.75,
+      "priority": 1
+    },
+    {
+      "id": "sage_openness_clarity",
+      "conditions": [
+        {"type": "trait", "key": "BIG5_OPENNESS", "operator": "gte", "value": 0.8},
+        {"type": "goal", "key": "CLARITY", "operator": "contains", "value": true}
+      ],
+      "outcome": {"house": "SAGE", "class": "REFLECTION_PATH"},
+      "weight": 0.7,
+      "priority": 2
+    },
+    {
+      "id": "artisan_creative_expression",
+      "conditions": [
+        {"type": "trait", "key": "BIG5_OPENNESS", "operator": "gte", "value": 0.7},
+        {"type": "trait", "key": "BIG5_EXTRAVERSION", "operator": "gte", "value": 0.6},
+        {"type": "goal", "key": "CREATIVITY", "operator": "contains", "value": true}
+      ],
+      "outcome": {"house": "ARTISAN", "class": "VISUAL_CREATIVE"},
+      "weight": 0.8,
+      "priority": 1
+    },
+    {
+      "id": "operative_discipline_focus",
+      "conditions": [
+        {"type": "trait", "key": "BIG5_CONSCIENTIOUSNESS", "operator": "gte", "value": 0.8},
+        {"type": "goal", "key": "FOCUS", "operator": "contains", "value": true}
+      ],
+      "outcome": {"house": "OPERATIVE", "class": "PRECISION_TRAINING"},
+      "weight": 0.75,
+      "priority": 2
+    },
+    {
+      "id": "councilor_extraversion_connection",
+      "conditions": [
+        {"type": "trait", "key": "BIG5_EXTRAVERSION", "operator": "gte", "value": 0.7},
+        {"type": "trait", "key": "BIG5_AGREEABLENESS", "operator": "gte", "value": 0.6},
+        {"type": "goal", "key": "CONNECTION", "operator": "contains", "value": true}
+      ],
+      "outcome": {"house": "COUNCILOR", "class": "EMPATHIC_LEADER"},
+      "weight": 0.8,
+      "priority": 1
+    }
+  ],
+  "reassessmentIntervals": {
+    "initial": 7,
+    "regular": 30,
+    "maximum": 90
+  }
+}

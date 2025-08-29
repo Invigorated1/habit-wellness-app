@@ -1,0 +1,167 @@
+# HabitStory Web App AI Instructions
+
+## Current Context
+
+This is the main Next.js application for HabitStory. We're building a wellness platform with:
+- Personality-based archetype classification 
+- Scheduled wellness prompts
+- Privacy-first verification
+- Community features
+
+## Active Development Tasks
+
+### Priority 1: Archetype System
+- [ ] Implement personality assessment flow
+- [ ] Create archetype assignment engine
+- [ ] Build house selection UI
+- [ ] Add reassessment capability
+
+### Priority 2: Prompt Scheduling
+- [ ] Create task template system
+- [ ] Implement cron-based scheduler
+- [ ] Build notification delivery
+- [ ] Add snooze/reschedule UI
+
+### Priority 3: Verification
+- [ ] Client-side anonymization
+- [ ] Capture widget UI
+- [ ] Upload flow
+- [ ] Peer review interface
+
+## File Creation Guidelines
+
+When creating new files in this directory:
+
+### Components (`src/components/`)
+- One component per file
+- Include TypeScript interfaces
+- Export from index files
+- Add Storybook stories for UI components
+
+### API Routes (`src/app/api/`)
+- Follow REST conventions
+- Use error handler wrapper
+- Include rate limiting
+- Document with OpenAPI comments
+
+### Library Code (`src/lib/`)
+- Pure functions preferred
+- Include unit tests
+- Export from feature index
+- Document complex algorithms
+
+## Code Generation Rules
+
+### For Archetype Features
+```typescript
+// Always include these elements:
+interface ArchetypeComponent {
+  house: House;
+  user: User;
+  assignment: Assignment;
+}
+
+// Use existing patterns:
+const { data, error } = useSWR(`/api/archetype/${userId}`);
+```
+
+### For Verification Features
+```typescript
+// Privacy first:
+// 1. Process client-side
+// 2. Anonymize before upload
+// 3. Generate integrity hash
+// 4. Use signed URLs
+```
+
+### For Scheduling Features
+```typescript
+// Consider timezones:
+const userTime = convertToUserTimezone(scheduledTime, user.timezone);
+// Respect DND windows
+if (isInDNDWindow(userTime, user.dndWindows)) return;
+```
+
+## Testing Requirements
+
+For every new feature:
+1. Unit tests for business logic
+2. Integration tests for APIs
+3. Component tests for UI
+4. E2E tests for critical flows
+
+## Performance Considerations
+
+- Lazy load archetype components
+- Cache archetype assignments
+- Prefetch likely next actions
+- Use optimistic UI updates
+
+## Security Reminders
+
+- All routes need authentication
+- Check archetype permissions
+- Validate with Zod schemas
+- Rate limit sensitive operations
+- Audit log important actions
+
+## Current Tech Debt
+
+1. Archetype rules hardcoded (need JSON config)
+2. Verification needs progress indicators
+3. Mobile responsiveness incomplete
+4. Offline support missing
+5. Internationalization prep needed
+
+## Useful Snippets
+
+### Create New Archetype Component
+```tsx
+import { House, Assignment } from '@/lib/archetype/types';
+
+interface ${House}CardProps {
+  assignment: Assignment;
+  onAction?: () => void;
+}
+
+export function ${House}Card({ assignment, onAction }: ${House}CardProps) {
+  return (
+    <div className="archetype-card">
+      {/* Implementation */}
+    </div>
+  );
+}
+```
+
+### Add API Endpoint
+```typescript
+import { withErrorHandler, successResponse } from '@/lib/api-handler';
+import { getOrCreateUser } from '@/lib/auth';
+
+export const GET = withErrorHandler(async (request: Request) => {
+  const user = await getOrCreateUser();
+  // Implementation
+  return successResponse(data);
+});
+```
+
+### Create Verification Processor
+```typescript
+export class ${Mode}Processor implements VerificationProcessor {
+  async process(capture: MediaStream): Promise<ProcessedCapture> {
+    // 1. Transform data
+    // 2. Generate hash
+    // 3. Return anonymized
+  }
+}
+```
+
+## Remember
+
+We're building a platform that:
+- Respects user privacy
+- Personalizes wellness journeys
+- Builds lasting habits
+- Fosters community
+
+Every feature should support these goals.

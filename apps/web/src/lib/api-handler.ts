@@ -1,0 +1,184 @@
+import { NextResponse } from 'next/server';
+import { logger } from './logger';
+import { AppError } from './errors';
+import { ZodError } from 'zod';
+import { withRateLimit } from './rate-limit';
+import { auth } from '@clerk/nextjs/server';
+import { extractRequestInfo, logRequest, logResponse } from './request-logger';
+import { performanceMonitor } from './performance';
+import * as Sentry from '@sentry/nextjs';
+import { sliCalculator } from './monitoring/sli';
+import { trackServerEvent, trackAPIPerformance, AnalyticsEvents } from './posthog';
+
+type Handler = (...args: any[]) => Promise<NextResponse>;
+
+interface HandlerOptions {
+  rateLimit?: boolean;
+  requireAuth?: boolean;
+  logRequests?: boolean;
+  trackPerformance?: boolean;
+}
+
+/**
+ * Wraps API route handlers with error handling, logging, and optional rate limiting
+ */
+export function withErrorHandler(handler: Handler, options: HandlerOptions = {}): Handler {
+  const { rateLimit = true, requireAuth = true, logRequests = true, trackPerformance = true } = options;
+  
+  return async (...args: any[]) => {
+    const request = args[0] as Request;
+    const startTime = Date.now();
+    let requestInfo: any = {};
+    
+    try {
+      // Extract request info for logging
+      if (logRequests) {
+        requestInfo = extractRequestInfo(request as any);
+        const { userId } = await auth();
+        requestInfo.userId = userId;
+        logRequest(requestInfo);
+        
+        // Set Sentry user context
+        if (userId) {
+          Sentry.setUser({ id: userId });
+        }
+      }
+      // Rate limiting
+      if (rateLimit) {
+        const { userId } = await auth();
+        const identifier = userId || request.headers.get('x-forwarded-for') || 'anonymous';
+        const { success, headers } = await withRateLimit(request, identifier);
+        
+        if (!success) {
+          return NextResponse.json(
+            { error: 'Too many requests. Please try again later.' },
+            { 
+              status: 429,
+              headers,
+            }
+          );
+        }
+      }
+      
+      const result = await handler(...args);
+      
+      // Log successful response
+      if (logRequests) {
+        const duration = Date.now() - startTime;
+        logResponse({
+          ...requestInfo,
+          status: result.status,
+          duration,
+        });
+      }
+      
+      // Track performance metrics
+      if (trackPerformance) {
+        const duration = Date.now() - startTime;
+        const url = new URL(request.url);
+        performanceMonitor.recordMetric(url.pathname, duration);
+        
+        // Track SLIs
+        await sliCalculator.recordRequest(
+          url.pathname,
+          duration,
+          true,
+          result.status
+        );
+        
+        // Track analytics
+        if (requestInfo.userId) {
+          trackAPIPerformance(requestInfo.userId, url.pathname, duration, result.status);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      // Log the error
+      logger.error('API Error', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined,
+        path: args[0]?.url || 'unknown',
+      });
+      
+      // Send to Sentry if it's not an operational error
+      if (!(error instanceof AppError) || !error.isOperational) {
+        Sentry.captureException(error, {
+          contexts: {
+            request: requestInfo,
+          },
+          extra: {
+            url: request.url,
+            method: request.method,
+          },
+        });
+      }
+
+      // Handle known errors
+      if (error instanceof AppError) {
+        return NextResponse.json(
+          { 
+            error: error.message,
+            statusCode: error.statusCode,
+          },
+          { status: error.statusCode }
+        );
+      }
+
+      // Handle Zod validation errors
+      if (error instanceof ZodError) {
+        return NextResponse.json(
+          { 
+            error: 'Validation failed',
+            errors: error.errors.map(e => `${e.path.join('.')}: ${e.message}`),
+            statusCode: 400,
+          },
+          { status: 400 }
+        );
+      }
+
+      // Handle Prisma errors
+      if (error instanceof Error && error.message.includes('P2002')) {
+        return NextResponse.json(
+          { 
+            error: 'A record with this data already exists',
+            statusCode: 409,
+          },
+          { status: 409 }
+        );
+      }
+
+      // Default error response
+      return NextResponse.json(
+        { 
+          error: 'Internal server error',
+          statusCode: 500,
+        },
+        { status: 500 }
+      );
+    }
+  };
+}
+
+/**
+ * Standard API response format
+ */
+export function successResponse<T>(data: T, status = 200) {
+  return NextResponse.json(
+    {
+      success: true,
+      data,
+    },
+    { status }
+  );
+}
+
+export function errorResponse(message: string, status = 400) {
+  return NextResponse.json(
+    {
+      success: false,
+      error: message,
+    },
+    { status }
+  );
+}
