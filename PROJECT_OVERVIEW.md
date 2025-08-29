@@ -1,163 +1,239 @@
-# 📱 Habit Wellness App - Project Overview
+# HabitStory - Technical Project Overview
 
-## 🎯 What Is This Project?
+## Executive Summary
 
-This is a **habit tracking web application** - think of it like a digital journal where users can:
-- Create personal habits they want to track (like "Exercise daily" or "Read for 30 minutes")
-- Mark habits as complete each day
-- See their progress and streaks over time
-- Access their data from any device
+HabitStory is a personalized wellness platform that uses personality-based archetypes to deliver customized meditation, movement, and mindfulness practices. The platform combines RPG-style user classification with privacy-first accountability mechanisms.
 
-## 🏗️ Project Structure (The Building Blocks)
+## Core Innovation
 
-```
-habit-wellness-app/
-├── apps/
-│   └── web/                    # Your main application
-│       ├── src/                # Source code (the actual app)
-│       │   ├── app/           # Pages and routes
-│       │   │   ├── api/       # Backend endpoints
-│       │   │   ├── dashboard/ # Main user interface
-│       │   │   ├── sign-in/   # Login page
-│       │   │   └── sign-up/   # Registration page
-│       │   └── lib/           # Shared utilities
-│       └── prisma/            # Database configuration
-└── packages/                   # (Future) Shared code between apps
-```
+### The Archetype System
 
-### 🔧 Tech Stack Explained
+Instead of generic habit tracking, HabitStory classifies users into wellness archetypes based on:
+- Personality traits (Big Five/HEXACO assessments)
+- Personal goals and interests
+- Behavioral preferences
 
-**Frontend (What Users See)**
-- **Next.js 15**: The framework that builds your website - like the foundation of a house
-- **React 19**: Makes the website interactive - like adding doors and windows that open/close
-- **TailwindCSS v4**: Makes everything look pretty - like paint and decorations
+This creates six primary "Houses":
+1. **Monk** - Focus on meditation and inner calm
+2. **Warrior-Monk** - Balance of physical and mental discipline
+3. **Sage** - Wisdom through reflection and study
+4. **Artisan** - Creative and expressive practices
+5. **Operative** - Precision and systematic approaches
+6. **Councilor** - Leadership and strategic thinking
 
-**Backend (Behind the Scenes)**
-- **API Routes**: The messengers that handle requests - like waiters in a restaurant
-- **Prisma**: Talks to your database - like a translator between your app and database
-- **PostgreSQL (Neon)**: Stores all the data - like a filing cabinet for user information
+Each house has subclasses that further personalize the experience.
 
-**Authentication (Security)**
-- **Clerk**: Handles user login/signup - like a security guard checking IDs at the door
-- **Middleware**: Protects private pages - like locks on certain rooms
+## Technical Architecture
 
-## 📊 Current Implementation Status
-
-### ✅ What's Already Built
-
-1. **Authentication System** (Complete)
-   - Users can sign up with email or Google
-   - Users can log in securely
-   - Only logged-in users can see their habits
-
-2. **Database Foundation** (Complete)
-   - User profiles are stored
-   - Habits are saved permanently
-   - Everything is connected properly
-
-3. **API Endpoints** (Complete)
-   - Create new habits
-   - View all habits
-   - Update existing habits
-   - Delete habits
-
-4. **Basic Dashboard** (Partial)
-   - Shows list of habits
-   - Displays basic information
-   - Real-time data updates
-
-### 🚧 What Still Needs Building
-
-1. **User Interface Components**
-   - Forms to create new habits
-   - Buttons to edit/delete habits
-   - Checkboxes to mark habits complete
-
-2. **Daily Tracking**
-   - Mark habits as done today
-   - Track completion history
-   - Calculate streaks automatically
-
-3. **Visual Improvements**
-   - Better looking dashboard
-   - Progress charts
-   - Mobile-friendly design
-
-4. **Home Page**
-   - Welcome page for new visitors
-   - Information about the app
-   - Call-to-action buttons
-
-## 🗄️ Database Structure (How Data is Organized)
-
-Think of it like a filing system:
+### Stack Overview
 
 ```
-Users Cabinet
-├── User File #1
-│   ├── Name: John Doe
-│   ├── Email: john@example.com
-│   └── Habits Folder
-│       ├── Habit: "Morning Meditation"
-│       │   ├── Description: "10 minutes daily"
-│       │   ├── Streak: 5 days
-│       │   └── Completion Records
-│       │       ├── Jan 1: ✓ Completed
-│       │       ├── Jan 2: ✓ Completed
-│       │       └── Jan 3: ✗ Missed
-│       └── Habit: "Exercise"
-└── User File #2
-    └── ... (similar structure)
+Frontend:      Next.js 15 (App Router) + React 19 + TailwindCSS v4
+Backend:       Next.js API Routes + Prisma + PostgreSQL
+Auth:          Clerk (OAuth + Email)
+Caching:       Upstash Redis
+Queues:        Upstash Queue + Vercel Cron
+Analytics:     PostHog
+Monitoring:    Sentry + Custom SLIs
+UI Library:    shadcn/ui
 ```
 
-## 🔐 Security Features
+### Key Technical Features
 
-1. **Route Protection**: Some pages require login - like needing a key to enter certain rooms
-2. **User Isolation**: Users only see their own data - like having separate lockers
-3. **Secure Authentication**: Handled by Clerk (a trusted service) - like using a professional locksmith
+#### 1. Privacy-First Verification System
+- **Client-side anonymization** before any upload
+- Face detection and blurring using WebGL
+- Voice pitch shifting and anonymization
+- Optional pose-only capture (keypoints extraction)
+- Hash-chain verification for integrity
 
-## 🛠️ Development Setup
+#### 2. Intelligent Scheduling Engine
+- Cron-based task generation 24h in advance
+- User timezone and preference aware
+- Smart notification retry with backoff
+- Snooze and reschedule within guardrails
 
-To work on this project, developers need:
-1. **Environment Variables**: Secret keys and passwords stored in `.env` file
-2. **Database Connection**: Link to PostgreSQL database
-3. **Node.js & pnpm**: Tools to run the code
-4. **Clerk Account**: For authentication services
+#### 3. Archetype Classification Engine
+- Rule-based system with weighted scoring
+- JSON-configurable for A/B testing
+- Weekly micro-reassessments
+- Confidence scoring and rationale tracking
 
-## 📈 Scalability & Future-Proofing
+#### 4. Real-time Prompt Personalization
+- Template-based content system
+- Archetype-specific variations
+- Progressive difficulty scaling
+- Context-aware timing adjustments
 
-The app is built to grow:
-- **Monorepo Structure**: Can add mobile apps later
-- **Type Safety**: TypeScript prevents bugs
-- **Modern Stack**: Using latest, stable technologies
-- **Cloud Database**: Can handle many users
+## Data Model Highlights
 
-## 🎮 How It All Works Together
+### Core Entities
 
-1. **User visits website** → Next.js serves the pages
-2. **User signs up** → Clerk handles authentication
-3. **User creates habit** → API endpoint receives request
-4. **API saves to database** → Prisma translates to SQL
-5. **Database stores data** → PostgreSQL keeps it safe
-6. **Dashboard updates** → SWR fetches new data
-7. **User sees their habits** → React displays the UI
+```prisma
+User -> Profile -> TraitScores
+     -> Assignment (House/Class/Subclass)
+     -> TaskInstances -> VerificationSubmissions
+     -> Goals
+     -> BillingPlan
+```
 
-## 💡 Key Concepts for Non-Technical People
+### Key Design Decisions
 
-- **API**: Like a waiter taking your order to the kitchen
-- **Database**: Like a filing cabinet storing information
-- **Frontend**: What you see on screen (like a store window)
-- **Backend**: What happens behind the scenes (like the warehouse)
-- **Authentication**: Proving who you are (like showing ID)
-- **Middleware**: Rules that run before showing pages (like a bouncer)
+1. **Separation of Templates vs Instances**
+   - Templates are reusable blueprints
+   - Instances are user-specific occurrences
+   - Enables easy content updates without migration
 
-## 🚀 Getting to MVP (Minimum Viable Product)
+2. **Config as Data**
+   - Archetype rules in JSON
+   - Feature flags for progressive rollout
+   - A/B testing without deployments
 
-To have a working app that users can actually use, we need:
-1. ✅ Users can sign up and log in
-2. ✅ Users can create habits
-3. ⏳ Users can mark habits as complete daily
-4. ⏳ Users can see their progress
-5. ⏳ Nice looking, easy-to-use interface
+3. **Privacy by Design**
+   - Verification modes enum in schema
+   - Separate media storage with TTL
+   - Audit trails for all access
 
-**Progress: About 60% complete** - The foundation is solid, now we need the user-facing features!
+## Security & Privacy
+
+### Data Protection
+- End-to-end encryption for sensitive data
+- Client-side processing for biometrics
+- Ephemeral storage for verification media
+- GDPR-compliant data export/deletion
+
+### Access Control
+- Role-based permissions (User/Admin/Reviewer)
+- Resource-level authorization
+- Rate limiting on all endpoints
+- Audit logging for compliance
+
+## Performance Optimizations
+
+### Caching Strategy
+- Redis for hot data (user profiles, active tasks)
+- 5-minute TTL for prompt lists
+- Cache invalidation on updates
+- Fallback to database on cache miss
+
+### Database Optimizations
+- Connection pooling with PgBouncer
+- Indexed queries for common access patterns
+- Soft deletes for data recovery
+- Read replicas for analytics
+
+### Frontend Performance
+- Static generation for marketing pages
+- Dynamic imports for heavy components
+- Image optimization with Next.js
+- Progressive enhancement for capture features
+
+## Monetization Architecture
+
+### Subscription Tiers
+
+```typescript
+enum BillingTier {
+  FREE = "FREE",           // Core features
+  PRO = "PRO",            // Verification + Analytics
+  PRO_PLUS = "PRO_PLUS"   // All features + Stakes
+}
+```
+
+### Payment Integration
+- Stripe for subscription management
+- Webhook handling for plan changes
+- Grace periods for failed payments
+- Usage-based limits enforcement
+
+## Scalability Considerations
+
+### Horizontal Scaling
+- Stateless API design
+- Redis for shared state
+- Queue-based job processing
+- CDN for static assets
+
+### Data Partitioning
+- User data sharded by ID
+- Time-series data partitioned by month
+- Separate analytics database
+- Archived data in cold storage
+
+## Development Workflow
+
+### AI-Accelerated Development
+- Cursor AI for rapid prototyping
+- Component generation from specs
+- Test generation for coverage
+- Documentation from code
+
+### Quality Assurance
+- Automated testing (Unit/Integration/E2E)
+- Accessibility compliance (WCAG 2.1 AA)
+- Performance budgets enforced
+- Security scanning in CI/CD
+
+## Deployment Strategy
+
+### Progressive Rollout
+1. **Phase 0**: Core archetypes + prompting
+2. **Phase 1**: Anonymized verification
+3. **Phase 2**: Community features
+4. **Phase 3**: Advanced analytics
+
+### Infrastructure
+- Vercel for hosting (Edge Functions)
+- Neon for PostgreSQL (Serverless)
+- Upstash for Redis (Edge-compatible)
+- Cloudflare R2 for media storage
+
+## Success Metrics
+
+### Technical KPIs
+- API latency P95 < 200ms
+- Uptime > 99.9%
+- Error rate < 0.1%
+- Cache hit ratio > 80%
+
+### Business KPIs
+- D1 activation ≥ 60%
+- W1 retention ≥ 35%
+- Verification adoption ≥ 25% (Pro)
+- 7-day streak ≥ 20% of actives
+
+## Risk Mitigation
+
+### Technical Risks
+- **Anonymization failure**: Fallback to server-side
+- **Classification accuracy**: Manual override option
+- **Scale bottlenecks**: Queue-based architecture
+
+### Business Risks
+- **Low archetype resonance**: A/B test variations
+- **Verification friction**: Progressive disclosure
+- **Retention drops**: Engagement campaigns
+
+## Future Roadmap
+
+### Near Term (3 months)
+- Wearable device integration
+- AI-powered prompt generation
+- Voice-guided sessions
+- Multi-language support
+
+### Medium Term (6 months)
+- Archetype evolution system
+- Corporate wellness programs
+- Therapist collaboration tools
+- Advanced biometric analysis
+
+### Long Term (12 months)
+- Global challenge system
+- Wellness marketplace
+- API for third-party apps
+- White-label solution
+
+---
+
+This platform represents a paradigm shift from generic habit tracking to personalized wellness journeys, leveraging modern web technologies and AI to create scalable, engaging experiences.

@@ -1,158 +1,178 @@
-# 🤖 AI Assistant Context File
+# HabitStory AI Development Context
 
-## Project State Snapshot
-**Last Updated**: Current Session
-**Project**: Habit Wellness App
-**Stage**: MVP Development (60% complete)
-**Next Task**: Build habit creation/management UI
+## Project Overview
 
-## Quick Facts for AI
-- **Framework**: Next.js 15 with App Router (not Pages Router!)
-- **Database**: PostgreSQL with Prisma ORM
-- **Auth**: Clerk (users auto-created on first API call)
-- **Styling**: TailwindCSS v4
-- **Monorepo**: Yes, using pnpm workspaces
+HabitStory is a personalized wellness platform that classifies users into RPG-style archetypes (Monk, Warrior-Monk, Sage, etc.) and delivers customized meditation, movement, and mindfulness practices. The platform features privacy-first verification through client-side anonymization.
 
-## Current File Structure
-```
-/workspace/
-├── apps/web/src/
-│   ├── app/
-│   │   ├── api/habits/         # ✅ CRUD endpoints complete
-│   │   ├── dashboard/          # ⚠️ Basic UI, needs features
-│   │   └── page.tsx           # ⚠️ Needs landing page
-│   └── lib/
-│       ├── prisma.ts          # ✅ DB client singleton
-│       ├── auth.ts            # ✅ User helpers
-│       ├── logger.ts          # ✅ Structured logging
-│       ├── errors.ts          # ✅ Error classes
-│       └── validations/       # ✅ Input validation
-```
+## Current State
 
-## Code Patterns to Follow
+- **Phase**: Post-MVP, scaling features
+- **Stack**: Next.js 15, TypeScript, Prisma, PostgreSQL, Clerk Auth, Redis
+- **Key Features**: Archetype system, scheduled prompts, verification, analytics
 
-### ✅ ALWAYS use this API pattern:
+## Core Concepts
+
+### Archetypes (Houses)
+- MONK: Meditation and inner calm focus
+- WARRIOR_MONK: Physical and mental discipline
+- SAGE: Wisdom through reflection
+- ARTISAN: Creative practices
+- OPERATIVE: Systematic approaches
+- COUNCILOR: Strategic thinking
+
+### Verification System
+- Client-side face blurring and voice anonymization
+- Optional pose-only capture
+- Peer review for accountability
+- Privacy-first design
+
+## Code Patterns
+
+### API Routes Pattern
 ```typescript
 export const GET = withErrorHandler(async (request: Request) => {
   const user = await getOrCreateUser();
-  logger.info('Action', { userId: user.id });
-  // Logic here
+  const data = await fetchData(user.id);
   return successResponse(data);
 });
 ```
 
-### ✅ ALWAYS filter by user:
+### Archetype Assignment Pattern
 ```typescript
-await prisma.habit.findMany({
-  where: { userId: user.id } // Required!
-});
+const traits = await calculateTraits(assessment);
+const assignment = await assignArchetype(traits, goals);
+await invalidateCache(`user:${userId}:archetype`);
 ```
 
-### ✅ ALWAYS throw errors (don't catch):
+### Verification Flow Pattern
 ```typescript
-throw new NotFoundError('Habit not found');
-throw new ValidationError(['Invalid input']);
-```
-
-## What's Working
-- ✅ User authentication (Clerk)
-- ✅ Database connection (Neon)
-- ✅ All API endpoints (habits CRUD)
-- ✅ Error handling system
-- ✅ Logging system
-- ✅ Rate limiting
-- ✅ Input validation
-- ✅ Basic tests
-
-## What's Needed for MVP
-1. **Habit Creation Form** - UI to create new habits
-2. **Habit List with Actions** - Edit/delete buttons
-3. **Daily Check-off** - Mark habits complete
-4. **Streak Display** - Show consecutive days
-5. **Landing Page** - Home page with sign-up CTA
-
-## Common Commands
-```bash
-cd apps/web
-pnpm dev          # Start dev server
-pnpm test         # Run tests
-pnpm db:studio    # View database GUI
-```
-
-## Environment Variables Needed
-```env
-DATABASE_URL=postgresql://...
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
+const anonymized = await clientAnonymizer.process(capture);
+const hash = generateHash(anonymized);
+const url = await getSignedUploadUrl();
+await upload(url, anonymized, hash);
 ```
 
 ## Database Schema
-```prisma
-model User {
-  id        String   @id
-  clerkId   String   @unique
-  email     String   @unique
-  habits    Habit[]
-}
 
-model Habit {
-  id          String   @id
-  name        String
-  description String?
-  streak      Int      @default(0)
-  isActive    Boolean  @default(true)
-  userId      String
-  user        User     @relation(...)
-  entries     HabitEntry[]
-}
+Key models:
+- User -> Profile -> TraitScores
+- User -> Assignment (archetype)
+- User -> TaskInstances -> VerificationSubmissions
+- TaskTemplate -> TaskInstances
 
-model HabitEntry {
-  id        String   @id
-  date      DateTime
-  completed Boolean
-  habitId   String
-  habit     Habit    @relation(...)
-}
+## Common Tasks
+
+### Add New Archetype
+1. Update House enum in `lib/archetype/types.ts`
+2. Add rules to `config/archetypes.json`
+3. Create UI components in `components/archetypes/`
+4. Update classification engine
+
+### Add Task Template
+1. Create template in seed data
+2. Add to scheduler rules
+3. Create any custom UI needed
+4. Test with target archetypes
+
+### Implement New Feature
+1. Start with the data model (Prisma)
+2. Create API endpoint
+3. Add business logic to lib/
+4. Build UI components
+5. Add tests
+6. Update documentation
+
+## Testing Approach
+
+- Unit tests for business logic
+- Integration tests for API routes
+- E2E tests for critical user flows
+- Accessibility tests for all new UI
+
+## Performance Considerations
+
+- Cache user profiles (5 min TTL)
+- Cache archetype assignments (1 hour)
+- Use database indexes for common queries
+- Lazy load heavy components
+
+## Security Requirements
+
+- All endpoints require authentication
+- Input validation with Zod schemas
+- Rate limiting on all routes
+- Audit logs for sensitive operations
+
+## Current Priorities
+
+1. Improve archetype classification accuracy
+2. Enhance verification UX
+3. Build community features
+4. Optimize prompt delivery
+5. Add more task templates
+
+## AI Assistant Guidelines
+
+When generating code:
+1. Follow existing patterns
+2. Include proper error handling
+3. Add TypeScript types
+4. Consider privacy implications
+5. Write tests for new features
+6. Update relevant documentation
+
+## Quick Commands
+
+```bash
+# Development
+pnpm dev                 # Start dev server
+pnpm db:studio          # Explore database
+pnpm test              # Run tests
+
+# Database
+pnpm db:push           # Update schema
+pnpm db:generate       # Generate client
+pnpm migrate:up        # Run migrations
+
+# Analysis
+pnpm typecheck         # Check types
+pnpm lint             # Lint code
+pnpm test:a11y        # Accessibility audit
 ```
 
-## UI Component Patterns
-When creating components:
-- Use `'use client'` for interactive components
-- Use SWR for data fetching
-- Use Tailwind classes for styling
-- Follow existing dashboard pattern
+## Architecture Decisions
 
-## Testing
-- Framework: Vitest
-- Run: `pnpm test`
-- Pattern: `src/**/__tests__/*.test.ts`
+1. **Monolithic by choice**: Faster iteration, shared code
+2. **Privacy-first**: Process biometrics client-side only
+3. **Config as data**: Archetypes rules in JSON for A/B testing
+4. **Edge-first**: Leverage Vercel Edge for global performance
+5. **Progressive enhancement**: Core features work without JS
 
-## Important Context
-1. **Monorepo**: This is apps/web in a monorepo
-2. **No Redux**: Using SWR for server state
-3. **TypeScript**: Strict mode enabled
-4. **Protected Routes**: Middleware handles auth
-5. **User Sync**: Webhook + fallback pattern
+## Integration Points
 
-## Common Pitfalls to Avoid
-- ❌ Don't use Pages Router patterns
-- ❌ Don't forget userId filtering
-- ❌ Don't use console.log (use logger)
-- ❌ Don't catch errors in routes
-- ❌ Don't create users manually
+- Clerk: Authentication and user management
+- Upstash: Redis caching and job queues
+- PostHog: Product analytics
+- Sentry: Error tracking
+- Stripe: Subscription billing
+- R2/S3: Anonymized media storage
 
-## AI Instructions
-1. When adding features, check existing patterns first
-2. Always maintain type safety
-3. Follow the established error handling
-4. Use the logger for debugging
-5. Test changes with `pnpm test`
+## Known Issues
 
-## Current Session Goals
-- Build habit creation UI
-- Add edit/delete functionality
-- Implement daily tracking
-- Calculate streaks properly
-- Polish the dashboard
+1. Verification upload can timeout on slow connections
+2. Archetype reassignment needs UX improvement
+3. Mobile PWA needs offline support
+4. Some animations janky on low-end devices
 
-Remember: Backend is complete, focus on frontend!
+## Future Roadmap
+
+- [ ] AI-powered prompt generation
+- [ ] Voice-guided meditation sessions
+- [ ] Wearable device integration
+- [ ] Multi-language support
+- [ ] Corporate wellness features
+- [ ] Archetype evolution system
+
+---
+
+Remember: We're building a wellness platform that respects user privacy while providing personalized, effective guidance. Every decision should balance personalization with privacy.

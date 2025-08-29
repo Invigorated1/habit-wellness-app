@@ -1,6 +1,7 @@
 {
-  "name": "web",
+  "name": "habitstory-web",
   "version": "0.1.0",
+  "description": "Personalized wellness through archetypes - Next.js web application",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",

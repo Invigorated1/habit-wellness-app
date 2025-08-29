@@ -1,72 +1,251 @@
-# Habit Wellness App - AI Assistant Rules
+# HabitStory Cursor Rules
 
 ## Project Context
-You are working on a habit tracking web application. Current status: Backend complete (60% to MVP), needs UI components.
+You are working on HabitStory, a personalized wellness platform that uses RPG-style archetypes to deliver customized meditation and movement practices with privacy-first verification.
 
-## Tech Stack
-- Framework: Next.js 15 (App Router)
-- Language: TypeScript
-- Database: PostgreSQL (Neon) + Prisma ORM
-- Auth: Clerk
-- Styling: TailwindCSS v4
-- Testing: Vitest
+## Code Style
 
-## Code Standards
+### TypeScript/React
+- Use functional components with TypeScript
+- Prefer `interface` over `type` for object shapes
+- Use explicit return types for functions
+- Destructure props in function parameters
+- Use `const` for all variable declarations
 
-### API Routes
-Always use this pattern:
+### Naming Conventions
+- Components: PascalCase (e.g., `ArchetypeCard`)
+- Functions: camelCase (e.g., `assignArchetype`)
+- Constants: UPPER_SNAKE_CASE (e.g., `MAX_RETRIES`)
+- Types/Interfaces: PascalCase with descriptive names
+- Files: kebab-case for non-components
+
+### File Organization
+```
+components/
+  archetypes/
+    MonkCard.tsx      # Archetype-specific component
+  ui/
+    button.tsx        # Reusable UI component
+  verification/
+    CaptureWidget.tsx # Feature-specific component
+```
+
+## API Patterns
+
+### Route Handlers
 ```typescript
 export const GET = withErrorHandler(async (request: Request) => {
+  // 1. Authenticate
   const user = await getOrCreateUser();
-  // Implementation
-  return successResponse(data);
+  
+  // 2. Validate input
+  const params = validateInput(request);
+  
+  // 3. Execute business logic
+  const result = await businessLogic(user.id, params);
+  
+  // 4. Return standardized response
+  return successResponse(result);
 });
 ```
 
 ### Error Handling
-- Throw custom errors: `throw new NotFoundError('Message')`
-- Never use try-catch in routes (handled by wrapper)
-- Use ValidationError for input errors
+- Use custom error classes (ArchetypeError, VerificationError)
+- Always include error context
+- Log errors before throwing
+- Return user-friendly messages
 
-### Database Queries
-- Always filter by userId
-- Use Prisma's type-safe queries
-- Relations: Include what you need upfront
+## Database Patterns
 
-### Logging
-- Use `logger.info()`, not console.log
-- Include context: `logger.info('Action', { userId, data })`
+### Prisma Queries
+```typescript
+// Always include error handling
+try {
+  const habit = await prisma.habit.findUnique({
+    where: { id, userId },
+    include: { user: true }
+  });
+  
+  if (!habit) {
+    throw new NotFoundError('Habit not found');
+  }
+  
+  return habit;
+} catch (error) {
+  logger.error('Failed to fetch habit', { error, id, userId });
+  throw error;
+}
+```
 
-### State Management
-- Use SWR for data fetching
-- Mutate on success: `mutate('/api/habits')`
+### Caching Strategy
+- Cache user profiles: 5 minutes
+- Cache archetypes: 1 hour  
+- Cache task lists: 1 minute
+- Invalidate on updates
 
-## File Structure
-- Pages: `/app/[page]/page.tsx`
-- API: `/app/api/[endpoint]/route.ts`
-- Components: `/components/[Component].tsx` (when created)
-- Utilities: `/lib/[utility].ts`
+## Privacy Guidelines
 
-## Current Priorities
-1. Create habit management UI
-2. Add daily tracking functionality
-3. Implement streak calculations
-4. Polish dashboard design
+### Verification Data
+- NEVER store raw biometric data
+- Process anonymization client-side
+- Use irreversible transformations
+- Hash all media before upload
+- Implement data retention limits
 
-## Don't
-- Don't create new files unless necessary
-- Don't add console.log statements
-- Don't skip validation
-- Don't expose other users' data
-- Don't use any TypeScript type
+### User Data
+- Encrypt PII at rest
+- Use audit logs for access
+- Implement data export
+- Honor deletion requests
+- Minimize data collection
 
-## Testing
-- Write tests for new utilities
-- Test files: `__tests__/[name].test.ts`
-- Run: `pnpm test`
+## Testing Requirements
 
-## Remember
-- This is a monorepo (packages structure)
-- Auth is handled by middleware
-- Database models: User, Habit, HabitEntry
-- All times in UTC
+### Test Coverage
+- Business logic: 90%+
+- API routes: 80%+
+- UI components: 70%+
+- Critical paths: E2E tests
+
+### Test Structure
+```typescript
+describe('ArchetypeAssignment', () => {
+  it('should assign Monk to high openness users', async () => {
+    // Arrange
+    const user = createMockUser({ traits: { openness: 0.8 } });
+    
+    // Act
+    const assignment = await assignArchetype(user);
+    
+    // Assert
+    expect(assignment.house).toBe('MONK');
+    expect(assignment.confidence).toBeGreaterThan(0.7);
+  });
+});
+```
+
+## Component Patterns
+
+### Archetype Components
+```tsx
+interface ArchetypeCardProps {
+  house: House;
+  assignment: Assignment;
+  onSelect?: () => void;
+}
+
+export function ArchetypeCard({ 
+  house, 
+  assignment, 
+  onSelect 
+}: ArchetypeCardProps) {
+  // Use composition for variants
+  const CardComponent = houseComponents[house];
+  
+  return (
+    <Card onClick={onSelect}>
+      <CardComponent assignment={assignment} />
+    </Card>
+  );
+}
+```
+
+### Verification Components
+```tsx
+// Always check permissions before rendering
+export function VerificationWidget({ mode }: { mode: VerificationMode }) {
+  const { canVerify } = usePermissions();
+  
+  if (!canVerify) {
+    return <UpgradePrompt feature="verification" />;
+  }
+  
+  // Render capture UI
+}
+```
+
+## Performance Rules
+
+### React Optimization
+- Memoize expensive computations
+- Use React.lazy for route splitting
+- Implement virtual scrolling for lists
+- Debounce user inputs
+- Prefetch next likely navigation
+
+### Database Optimization
+- Use indexes for common queries
+- Implement pagination
+- Avoid N+1 queries
+- Use connection pooling
+- Cache expensive aggregations
+
+## Security Checklist
+
+For every feature:
+- [ ] Authenticate user
+- [ ] Authorize action
+- [ ] Validate input
+- [ ] Sanitize output
+- [ ] Rate limit endpoint
+- [ ] Log security events
+- [ ] Test edge cases
+
+## Documentation
+
+### Code Comments
+```typescript
+/**
+ * Assigns an archetype based on personality traits and goals.
+ * Uses weighted scoring with confidence calculation.
+ * 
+ * @param user - User with completed assessment
+ * @returns Assignment with house and confidence score
+ * @throws {AssessmentIncompleteError} If assessment missing
+ */
+export async function assignArchetype(user: User): Promise<Assignment> {
+  // Implementation
+}
+```
+
+### README Updates
+- Document new features
+- Update API examples
+- Add migration guides
+- Include troubleshooting
+
+## Git Workflow
+
+### Commit Messages
+```
+feat(archetype): add Sage house classification
+fix(verification): improve face detection accuracy
+docs(api): update webhook documentation
+test(scheduler): add prompt delivery tests
+refactor(auth): simplify permission checks
+```
+
+### Branch Naming
+- `feature/archetype-sage`
+- `fix/verification-timeout`
+- `refactor/scheduler-performance`
+- `docs/api-updates`
+
+## Common Pitfalls to Avoid
+
+1. **Storing sensitive data**: Always anonymize first
+2. **Skipping validation**: Validate all user input
+3. **Ignoring errors**: Handle all error cases
+4. **Over-caching**: Some data needs freshness
+5. **Complex archetypes**: Start simple, iterate
+6. **Feature creep**: MVP first, enhance later
+
+## When Stuck
+
+1. Check existing patterns in codebase
+2. Review architecture docs
+3. Consider privacy implications
+4. Write tests first
+5. Ask: "Does this improve wellness outcomes?"
+
+Remember: We're building a platform that helps people improve their lives while respecting their privacy. Every line of code should serve these goals.
