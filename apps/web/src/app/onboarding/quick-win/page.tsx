@@ -9,10 +9,13 @@ import { Button } from '@/components/ui/button';
 import { AsciiArt, AnimatedAsciiArt, AsciiProgress } from '@/components/AsciiArt';
 import { getHouseAscii, BREATHING_ANIMATION, COMPLETION_BURST } from '@/ascii';
 import confetti from 'canvas-confetti';
+import { useRewards } from '@/hooks/useRewards';
+import { RewardToast } from '@/components/rewards/RewardReveal';
 
 export default function QuickWinPage() {
   const router = useRouter();
   const { assignedHouse } = useOnboardingStore();
+  const { checkRewards, pendingRewards } = useRewards();
   const [isActive, setIsActive] = useState(false);
   const [timeElapsed, setTimeElapsed] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -75,13 +78,20 @@ export default function QuickWinPage() {
         colors: ['#00ff66', '#ffffff', '#c28a24'],
       });
       
+      // Check for variable rewards
+      checkRewards('practice_complete', {
+        practiceType: practice.type,
+        streakLength: 1, // First practice
+        consecutiveDays: 1,
+      });
+      
       // Save completion (in real app, would call API)
       setTimeout(() => {
         // Award badge and XP
         console.log('Awarded:', practice.reward);
       }, 1000);
     }
-  }, [isComplete, practice]);
+  }, [isComplete, practice, checkRewards]);
   
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -98,8 +108,9 @@ export default function QuickWinPage() {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full space-y-8">
+    <>
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-2xl w-full space-y-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -262,7 +273,11 @@ export default function QuickWinPage() {
             </button>
           </div>
         )}
+        </div>
       </div>
-    </div>
+      
+      {/* Reward Reveals */}
+      <RewardToast rewards={pendingRewards} />
+    </>
   );
 }

@@ -7,15 +7,20 @@ import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { AsciiArt } from '@/components/AsciiArt';
 import { TERMINAL_PROMPT } from '@/ascii';
 import { cn } from '@/lib/utils';
+import { NotificationCenter } from '@/components/notifications/NotificationCenter';
+import { useAuth } from '@clerk/nextjs';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/progress', label: 'Progress' },
+  { href: '/house', label: 'House' },
   { href: '/onboarding', label: 'Journey' },
   { href: '/theme-demo', label: 'Themes' },
 ];
 
 export function TopNav() {
   const pathname = usePathname();
+  const { userId } = useAuth();
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b border-[var(--border)] bg-[var(--bg)] backdrop-blur">
@@ -51,6 +56,7 @@ export function TopNav() {
 
           {/* Right Side */}
           <div className="flex items-center space-x-4">
+            {userId && <NotificationCenter userId={userId} />}
             <ThemeToggle />
             <UserButton afterSignOutUrl="/" />
           </div>
