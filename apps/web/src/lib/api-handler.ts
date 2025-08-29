@@ -4,24 +4,37 @@ import { AppError } from './errors';
 import { ZodError } from 'zod';
 import { withRateLimit } from './rate-limit';
 import { auth } from '@clerk/nextjs/server';
+import { extractRequestInfo, logRequest, logResponse } from './request-logger';
+import { performanceMonitor } from './performance';
 
 type Handler = (...args: any[]) => Promise<NextResponse>;
 
 interface HandlerOptions {
   rateLimit?: boolean;
   requireAuth?: boolean;
+  logRequests?: boolean;
+  trackPerformance?: boolean;
 }
 
 /**
  * Wraps API route handlers with error handling, logging, and optional rate limiting
  */
 export function withErrorHandler(handler: Handler, options: HandlerOptions = {}): Handler {
-  const { rateLimit = true, requireAuth = true } = options;
+  const { rateLimit = true, requireAuth = true, logRequests = true, trackPerformance = true } = options;
   
   return async (...args: any[]) => {
     const request = args[0] as Request;
+    const startTime = Date.now();
+    let requestInfo: any = {};
     
     try {
+      // Extract request info for logging
+      if (logRequests) {
+        requestInfo = extractRequestInfo(request as any);
+        const { userId } = await auth();
+        requestInfo.userId = userId;
+        logRequest(requestInfo);
+      }
       // Rate limiting
       if (rateLimit) {
         const { userId } = await auth();
@@ -40,6 +53,24 @@ export function withErrorHandler(handler: Handler, options: HandlerOptions = {})
       }
       
       const result = await handler(...args);
+      
+      // Log successful response
+      if (logRequests) {
+        const duration = Date.now() - startTime;
+        logResponse({
+          ...requestInfo,
+          status: result.status,
+          duration,
+        });
+      }
+      
+      // Track performance metrics
+      if (trackPerformance) {
+        const duration = Date.now() - startTime;
+        const url = new URL(request.url);
+        performanceMonitor.recordMetric(url.pathname, duration);
+      }
+      
       return result;
     } catch (error) {
       // Log the error
