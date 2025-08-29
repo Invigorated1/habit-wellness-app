@@ -1,10 +1,11 @@
 /**
- * Simple in-memory rate limiter for development
- * For production, use Redis-based solution like Upstash
+ * Redis-based rate limiter using Upstash
  */
 
 import { logger } from './logger';
+import { ratelimit as upstashRateLimit } from './redis';
 
+// Fallback in-memory rate limiter for development
 interface RateLimitEntry {
   count: number;
   resetTime: number;
@@ -82,8 +83,35 @@ class InMemoryRateLimiter {
   }
 }
 
-// Create singleton instance
-export const rateLimiter = new InMemoryRateLimiter();
+// Use Redis-based rate limiter if available, otherwise fallback to in-memory
+const useRedis = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
+const inMemoryLimiter = new InMemoryRateLimiter();
+
+export const rateLimiter = {
+  async check(identifier: string): Promise<{ success: boolean; limit: number; remaining: number; reset: number }> {
+    if (useRedis) {
+      try {
+        const { success, limit, remaining, reset } = await upstashRateLimit.limit(identifier);
+        
+        if (!success) {
+          logger.warn('Rate limit exceeded (Redis)', { identifier });
+        }
+        
+        return {
+          success,
+          limit,
+          remaining,
+          reset: reset || Date.now() + 60000,
+        };
+      } catch (error) {
+        logger.error('Redis rate limit error, falling back to in-memory', { error });
+        // Fall through to in-memory limiter
+      }
+    }
+    
+    return inMemoryLimiter.check(identifier);
+  }
+};
 
 /**
  * Rate limit middleware for API routes

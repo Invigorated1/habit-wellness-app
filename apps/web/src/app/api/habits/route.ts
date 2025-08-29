@@ -6,6 +6,7 @@ import { CreateHabitSchema, HabitResponseSchema, SuccessResponseSchema } from '@
 import { withErrorHandler, successResponse } from '@/lib/api-handler';
 import { UnauthorizedError, ValidationError } from '@/lib/errors';
 import { z } from 'zod';
+import { habitCache, invalidateHabitCache } from '@/lib/redis';
 
 export const GET = withErrorHandler(async () => {
   // Get the current user
@@ -13,8 +14,17 @@ export const GET = withErrorHandler(async () => {
   
   logger.info('Fetching habits', { userId: user.id });
 
-    // Fetch all habits for the user
-    const habits = await prisma.habit.findMany({
+  // Try cache first
+  const cacheKey = `user:${user.id}:habits`;
+  const cached = await habitCache.get<any[]>(cacheKey);
+  
+  if (cached) {
+    logger.info('Habits retrieved from cache', { userId: user.id, count: cached.length });
+    return successResponse(cached);
+  }
+
+  // Fetch all habits for the user
+  const habits = await prisma.habit.findMany({
       where: {
         userId: user.id,
       },
@@ -42,6 +52,9 @@ export const GET = withErrorHandler(async () => {
       updatedAt: habit.updatedAt.toISOString(),
     }));
 
+    // Cache the results
+    await habitCache.set(cacheKey, transformedHabits);
+    
     logger.info('Habits fetched successfully', { userId: user.id, count: habits.length });
     return successResponse(transformedHabits);
 });
@@ -67,6 +80,9 @@ export const POST = withErrorHandler(async (request: Request) => {
       },
     });
 
+    // Invalidate user's habits cache
+    await invalidateHabitCache(user.id);
+    
     logger.info('Habit created successfully', { userId: user.id, habitId: newHabit.id });
     
     // Return the created habit

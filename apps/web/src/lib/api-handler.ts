@@ -7,6 +7,8 @@ import { auth } from '@clerk/nextjs/server';
 import { extractRequestInfo, logRequest, logResponse } from './request-logger';
 import { performanceMonitor } from './performance';
 import * as Sentry from '@sentry/nextjs';
+import { sliCalculator } from './monitoring/sli';
+import { trackServerEvent, trackAPIPerformance, AnalyticsEvents } from './posthog';
 
 type Handler = (...args: any[]) => Promise<NextResponse>;
 
@@ -75,6 +77,19 @@ export function withErrorHandler(handler: Handler, options: HandlerOptions = {})
         const duration = Date.now() - startTime;
         const url = new URL(request.url);
         performanceMonitor.recordMetric(url.pathname, duration);
+        
+        // Track SLIs
+        await sliCalculator.recordRequest(
+          url.pathname,
+          duration,
+          true,
+          result.status
+        );
+        
+        // Track analytics
+        if (requestInfo.userId) {
+          trackAPIPerformance(requestInfo.userId, url.pathname, duration, result.status);
+        }
       }
       
       return result;
