@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "lastUpdated": "2025-01-09",
+  "project": "HabitStory",
+  "description": "Wellness habit tracking RPG with personality-based archetypes",
+  "files": {
+    "system-overview.md": {
+      "purpose": "High-level system description and value proposition",
+      "topics": ["overview", "features", "tech-stack", "approach"]
+    },
+    "module-map.md": {
+      "purpose": "Directory structure and module organization",
+      "topics": ["modules", "components", "api-routes", "dependencies"]
+    },
+    "data-schemas.md": {
+      "purpose": "Database models and API request/response formats",
+      "topics": ["prisma-schema", "api-schemas", "state-schemas"]
+    },
+    "api-surface.md": {
+      "purpose": "Complete API endpoint documentation",
+      "topics": ["endpoints", "authentication", "rate-limits", "errors"]
+    },
+    "coding-conventions.md": {
+      "purpose": "Code style guidelines and best practices",
+      "topics": ["typescript", "react", "testing", "git"]
+    }
+  },
+  "relatedDocs": {
+    "../architecture.md": "System architecture with diagrams",
+    "../glossary.md": "Term definitions and concepts",
+    "../readability-audit.md": "Code quality assessment",
+    "../../README.md": "Project setup and quickstart",
+    "../../AI_CONTEXT.md": "AI assistant instructions",
+    "../../.cursorrules": "Cursor IDE specific rules"
+  },
+  "keyPaths": {
+    "source": "/workspace/apps/web/src",
+    "api": "/workspace/apps/web/src/app/api",
+    "components": "/workspace/apps/web/src/components",
+    "lib": "/workspace/apps/web/src/lib",
+    "prisma": "/workspace/apps/web/prisma",
+    "tests": "/workspace/apps/web/src/**/__tests__"
+  },
+  "externalServices": [
+    {
+      "name": "Clerk",
+      "purpose": "Authentication",
+      "docs": "https://clerk.com/docs"
+    },
+    {
+      "name": "Neon",
+      "purpose": "PostgreSQL database",
+      "docs": "https://neon.tech/docs"
+    },
+    {
+      "name": "Upstash",
+      "purpose": "Redis caching",
+      "docs": "https://upstash.com/docs"
+    },
+    {
+      "name": "Vercel",
+      "purpose": "Hosting platform",
+      "docs": "https://vercel.com/docs"
+    }
+  ],
+  "coreFeatures": [
+    "archetype-classification",
+    "smart-notifications",
+    "variable-rewards",
+    "house-communities",
+    "skill-trees",
+    "graceful-streaks"
+  ]
+}
