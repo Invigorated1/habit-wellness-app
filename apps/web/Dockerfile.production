@@ -1,0 +1,94 @@
+# syntax=docker/dockerfile:1
+
+# Production-optimized Dockerfile for HabitStory
+# Multi-stage build for minimal image size
+
+# Stage 1: Dependencies
+FROM node:18-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@8
+
+# Copy dependency files
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/*/package.json ./packages/*/
+
+# Install production dependencies only
+RUN pnpm install --frozen-lockfile --prod
+
+# Stage 2: Builder
+FROM node:18-alpine AS builder
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm@8
+
+# Copy dependencies from deps stage
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
+
+# Copy source code
+COPY . .
+
+# Generate Prisma Client
+WORKDIR /app/apps/web
+RUN pnpm prisma generate
+
+# Build application
+ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV production
+
+# Build arguments for compile-time environment variables
+ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+ARG NEXT_PUBLIC_POSTHOG_KEY
+ARG NEXT_PUBLIC_POSTHOG_HOST
+ARG NEXT_PUBLIC_SENTRY_DSN
+
+RUN pnpm build
+
+# Stage 3: Runner
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Copy necessary files from builder
+COPY --from=builder /app/apps/web/public ./apps/web/public
+COPY --from=builder /app/apps/web/package.json ./apps/web/package.json
+
+# Copy standalone build
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+
+# Copy Prisma schema for runtime
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/prisma ./apps/web/prisma
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/src/generated ./apps/web/src/generated
+
+# Copy health check script
+COPY --from=builder --chown=nextjs:nodejs /app/apps/web/healthcheck.js ./apps/web/healthcheck.js
+
+# Set correct permissions
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
+EXPOSE 3000
+
+ENV PORT 3000
+ENV HOSTNAME "0.0.0.0"
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD node apps/web/healthcheck.js || exit 1
+
+# Use node directly for better performance
+CMD ["node", "apps/web/server.js"]
