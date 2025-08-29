@@ -165,13 +165,13 @@ export function ArchetypeReveal({ onComplete }: ArchetypeRevealProps) {
             >
               <Button
                 size="lg"
-                onClick={onComplete}
+                onClick={() => window.location.href = '/onboarding/quick-win'}
                 className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700"
               >
-                Begin Your Journey
+                Start Your First Practice (2 min)
               </Button>
               <p className="text-sm text-gray-600 mt-3">
-                Your personalized practice schedule is ready
+                Experience your archetype with a quick practice
               </p>
             </motion.div>
           </motion.div>
