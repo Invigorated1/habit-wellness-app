@@ -6,6 +6,8 @@ import { UpdateHabitSchema, HabitIdSchema, HabitWithEntriesSchema } from '@/lib/
 import { withErrorHandler, successResponse } from '@/lib/api-handler';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { z } from 'zod';
+import { requireHabitOwnership } from '@/lib/auth/permissions';
+import { invalidateHabitCache } from '@/lib/redis';
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -21,10 +23,12 @@ export const GET = withErrorHandler(async (request: Request, { params }: RoutePa
   
   logger.info('Fetching habit', { userId: user.id, habitId: validatedId });
 
-    const habit = await prisma.habit.findFirst({
+    // Check authorization
+    await requireHabitOwnership(user.id, validatedId);
+
+    const habit = await prisma.habit.findUnique({
       where: {
         id: validatedId,
-        userId: user.id,
       },
       include: {
         entries: {

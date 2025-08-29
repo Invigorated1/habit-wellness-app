@@ -19,6 +19,7 @@ model User {
   clerkId   String   @unique
   email     String   @unique
   name      String?
+  role      String   @default("user") // user, premium, admin
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   
