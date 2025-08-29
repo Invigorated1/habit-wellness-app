@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { UserButton } from '@clerk/nextjs';
-import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import { ThemeToggle } from '@/components/theme/theme-toggle';
 import { AsciiArt } from '@/components/AsciiArt';
 import { TERMINAL_PROMPT } from '@/ascii';
 import { cn } from '@/lib/utils';

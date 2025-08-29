@@ -9,7 +9,7 @@ import { taskScheduler } from '@/lib/scheduler/task-scheduler';
 import { logger } from '@/lib/logger';
 import { withErrorHandler, successResponse } from '@/lib/api-handler';
 import { addDays, startOfDay, subHours } from 'date-fns';
-import { utcToZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 // Vercel Cron configuration
 export const runtime = 'nodejs';

@@ -1,6 +1,8 @@
 /**
- * Smart Notification Engine
- * Orchestrates context-aware notifications
+ * @fileoverview Smart Notification Engine
+ * @module notifications/smart-engine
+ * @description Orchestrates context-aware notifications based on user behavior, preferences, and context.
+ * Implements cooldown periods, daily limits, and intelligent batching to prevent notification fatigue.
  */
 
 import { prisma } from '@/lib/prisma';

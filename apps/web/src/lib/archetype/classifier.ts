@@ -20,15 +20,32 @@ import {
 import archetypeConfig from './config.json';
 import { logger } from '@/lib/logger';
 
+/**
+ * Classifies users into archetypes based on personality traits and goals
+ * Uses a rule-based system with confidence scoring
+ */
 export class ArchetypeClassifier {
   private config: ArchetypeConfig;
 
+  /**
+   * Creates a new ArchetypeClassifier instance
+   * @param config - Optional custom configuration (defaults to built-in config)
+   */
   constructor(config?: ArchetypeConfig) {
     this.config = config || (archetypeConfig as ArchetypeConfig);
   }
 
   /**
-   * Main classification method
+   * Classifies a user based on their traits and goals
+   * @param input - User's trait scores and goals
+   * @returns Classification result with house, class, and confidence score
+   * @example
+   * ```ts
+   * const result = await classifier.classify({
+   *   traitScores: { openness: 0.8, conscientiousness: 0.7, ... },
+   *   goals: [Goal.CALM, Goal.FOCUS]
+   * });
+   * ```
    */
   async classify(input: ClassificationInput): Promise<ClassificationResult> {
     logger.info('Starting archetype classification', {

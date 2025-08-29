@@ -82,3 +82,22 @@ export function useTheme() {
   }
   return context;
 }
+
+// Keyboard shortcut component
+export function ThemeKeyboardShortcut() {
+  const { cycleTheme } = useTheme();
+
+  React.useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'T') {
+        e.preventDefault();
+        cycleTheme();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [cycleTheme]);
+
+  return null;
+}

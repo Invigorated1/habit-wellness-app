@@ -7,6 +7,19 @@ import { variableRewards, VariableReward, RewardContext } from '@/lib/rewards/va
 import { useAuth } from '@clerk/nextjs';
 import { useOnboardingStore } from '@/stores/onboarding';
 
+/**
+ * Hook for managing variable rewards in the application
+ * @returns Object containing reward state and methods
+ * @example
+ * ```tsx
+ * const { pendingRewards, checkRewards, claimReward } = useRewards();
+ * 
+ * // Check for rewards after completing a task
+ * const rewards = await checkRewards('practice_complete', { 
+ *   practiceType: 'meditation' 
+ * });
+ * ```
+ */
 export function useRewards() {
   const [pendingRewards, setPendingRewards] = useState<VariableReward[]>([]);
   const [isChecking, setIsChecking] = useState(false);

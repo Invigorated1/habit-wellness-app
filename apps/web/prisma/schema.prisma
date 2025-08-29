@@ -29,6 +29,8 @@ model User {
   taskInstances TaskInstance[]
   verifications VerificationSubmission[]
   billingPlan   BillingPlan?
+  habits        Habit[]
+  habitEntries  HabitEntry[]
   
   @@map("users")
 }
@@ -94,6 +96,44 @@ model Goal {
   
   @@index([userId, active])
   @@map("goals")
+}
+
+// ==================== HABITS (Legacy compatibility) ====================
+
+model Habit {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name           String
+  description    String?
+  frequency      String   @default("daily") // daily, weekly, custom
+  targetDays     Int[]    @default([]) // 0=Sun, 1=Mon, etc.
+  reminderTime   String?  // HH:MM format
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  // Relations
+  entries        HabitEntry[]
+  
+  @@index([userId, isActive])
+  @@map("habits")
+}
+
+model HabitEntry {
+  id          String   @id @default(cuid())
+  habitId     String
+  habit       Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime @default(now())
+  
+  @@unique([habitId, userId, createdAt])
+  @@index([userId, createdAt])
+  @@map("habit_entries")
 }
 
 // ==================== TASKS & SCHEDULING ====================

@@ -98,6 +98,14 @@ const initialState = {
   socialPreference: 'mixed' as const,
 };
 
+/**
+ * Zustand store for managing onboarding flow state
+ * Persists to localStorage to allow users to resume onboarding
+ * @example
+ * ```tsx
+ * const { currentStep, completeStep, personalityAnswers } = useOnboardingStore();
+ * ```
+ */
 export const useOnboardingStore = create<OnboardingState>()(
   persist(
     (set, get) => ({

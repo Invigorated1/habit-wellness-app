@@ -1,6 +1,8 @@
 /**
- * Variable Rewards Engine
- * Intermittent reinforcement for sustained engagement
+ * @fileoverview Variable Rewards Engine
+ * @module rewards/variable-rewards
+ * @description Implements intermittent reinforcement through randomized rewards with different rarity tiers.
+ * Uses psychological principles to maintain engagement without creating unhealthy patterns.
  */
 
 import { prisma } from '@/lib/prisma';

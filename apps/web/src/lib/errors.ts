@@ -34,6 +34,13 @@ export class NotFoundError extends AppError {
   }
 }
 
+export class ForbiddenError extends AppError {
+  constructor(message = 'Access forbidden') {
+    super(403, message);
+    this.name = 'ForbiddenError';
+  }
+}
+
 export class ConflictError extends AppError {
   constructor(message = 'Resource conflict') {
     super(409, message);

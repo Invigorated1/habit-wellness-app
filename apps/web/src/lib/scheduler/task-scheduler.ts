@@ -13,7 +13,7 @@ import {
 } from '@/lib/archetype/types';
 import { logger } from '@/lib/logger';
 import { addDays, addHours, format, isWithinInterval, parseISO, setHours, setMinutes } from 'date-fns';
-import { zonedTimeToUtc, utcToZonedTime } from 'date-fns-tz';
+import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import archetypeConfig from '@/lib/archetype/config.json';
 
 interface ScheduleWindow {

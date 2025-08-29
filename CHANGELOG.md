@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Glossary of terms and concepts
   - LLM-ready documentation in `/docs/llm-context/`
   - Readability audit report
+  - Refactoring summary document
 - Missing UI components
   - Button component (`/components/ui/button.tsx`)
   - Card component (`/components/ui/card.tsx`)
@@ -20,15 +21,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `@radix-ui/react-slot`
   - `class-variance-authority`
   - `date-fns-tz`
+- JSDoc comments to public APIs
+  - ArchetypeClassifier
+  - useRewards hook
+  - useOnboardingStore
+  - File-level documentation for key modules
+- Missing database models
+  - Habit model in Prisma schema
+  - HabitEntry model for tracking
 
 ### Changed
 - Updated README with current project state
 - Improved code organization documentation
+- Renamed theme components to kebab-case
+  - `ThemeProvider.tsx` → `theme-provider.tsx`
+  - `ThemeToggle.tsx` → `theme-toggle.tsx`
+- Updated import statements for renamed files
 
 ### Fixed
 - 17 unresolved imports for UI components
 - Missing dependencies in package.json
 - Build errors from missing core components
+- TypeScript errors
+  - date-fns-tz API changes
+  - Missing exports (ThemeKeyboardShortcut, ForbiddenError)
+  - Import errors
+- Missing Prisma models causing database query failures
 
 ## [0.4.0] - 2025-01-09
 

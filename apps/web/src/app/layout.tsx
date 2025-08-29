@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ClerkProviderWrapper } from "./providers/clerk-provider";
 import { PHProvider } from "./providers/posthog-provider";
-import { ThemeProvider, ThemeKeyboardShortcut } from "@/components/theme/ThemeProvider";
+import { ThemeProvider, ThemeKeyboardShortcut } from "@/components/theme/theme-provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
