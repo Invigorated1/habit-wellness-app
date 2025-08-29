@@ -2,15 +2,15 @@ import { PostHog } from 'posthog-node';
 import posthogClient from 'posthog-js';
 import { logger } from './logger';
 
-// Server-side PostHog client
-export const posthogServer = new PostHog(
-  process.env.NEXT_PUBLIC_POSTHOG_KEY || '',
-  {
-    host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com',
-    flushAt: 20,
-    flushInterval: 10000,
-  }
-);
+// Server-side PostHog client - only initialize if key is available
+const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+export const posthogServer = posthogKey
+  ? new PostHog(posthogKey, {
+      host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com',
+      flushAt: 20,
+      flushInterval: 10000,
+    })
+  : null;
 
 // Analytics event types
 export const AnalyticsEvents = {
@@ -47,7 +47,7 @@ export function trackServerEvent(
   properties?: Record<string, any>
 ) {
   try {
-    if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+    if (!posthogServer) {
       logger.debug('PostHog not configured, skipping event', { event });
       return;
     }
@@ -78,7 +78,7 @@ export function identifyUser(
   }
 ) {
   try {
-    if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+    if (!posthogServer) {
       return;
     }
     
@@ -129,5 +129,7 @@ export function trackAPIPerformance(
 
 // Shutdown analytics on app termination
 export async function shutdownAnalytics() {
-  await posthogServer.shutdown();
+  if (posthogServer) {
+    await posthogServer.shutdown();
+  }
 }

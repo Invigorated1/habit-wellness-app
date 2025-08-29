@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import { vi } from 'vitest';
 
 // Mock Next.js router
 vi.mock('next/navigation', () => ({
@@ -27,3 +28,6 @@ vi.mock('@clerk/nextjs', () => ({
 // Mock environment variables
 process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = 'pk_test_mock';
 process.env.CLERK_SECRET_KEY = 'sk_test_mock';
+process.env.NEXT_PUBLIC_POSTHOG_KEY = 'phk_test_mock';
+process.env.NEXT_PUBLIC_POSTHOG_HOST = 'https://test.posthog.com';
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db';

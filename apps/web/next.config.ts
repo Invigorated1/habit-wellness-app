@@ -2,6 +2,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   experimental: {
     // Disable turbopack for API routes to avoid runtime issues
     turbo: {

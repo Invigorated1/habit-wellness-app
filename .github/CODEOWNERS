@@ -1,0 +1,43 @@
+# HabitStory Code Ownership
+# These owners will be automatically requested for review when someone opens a pull request
+
+# Global owners - will be requested for review on all changes
+* @Invigorated1
+
+# Frontend Components
+/apps/web/src/components/ @Invigorated1
+/apps/web/src/app/ @Invigorated1
+/apps/web/src/hooks/ @Invigorated1
+/apps/web/src/stores/ @Invigorated1
+
+# Backend/API
+/apps/web/src/app/api/ @Invigorated1
+/apps/web/src/lib/ @Invigorated1
+/apps/web/src/middleware.ts @Invigorated1
+
+# Database
+/apps/web/prisma/ @Invigorated1
+/apps/web/scripts/migrate.ts @Invigorated1
+
+# DevOps & Infrastructure
+/.github/ @Invigorated1
+/Dockerfile @Invigorated1
+/docker-compose.yml @Invigorated1
+*.yml @Invigorated1
+*.yaml @Invigorated1
+
+# Documentation
+/docs/ @Invigorated1
+/README.md @Invigorated1
+*.md @Invigorated1
+
+# Configuration
+*.config.ts @Invigorated1
+*.config.js @Invigorated1
+.env.example @Invigorated1
+
+# Testing
+/apps/web/e2e/ @Invigorated1
+/apps/web/src/**/__tests__/ @Invigorated1
+*.test.ts @Invigorated1
+*.spec.ts @Invigorated1
