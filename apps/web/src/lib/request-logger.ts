@@ -19,31 +19,75 @@ interface ResponseLogContext extends RequestLogContext {
 }
 
 /**
+ * Redacts sensitive information from IP addresses
+ * IPv4: 192.168.1.100 -> 192.168.x.x
+ * IPv6: 2001:db8:85a3::8a2e:370:7334 -> 2001:db8:xxxx:xxxx:xxxx:xxxx:xxxx
+ */
+function redactIP(ip: string | null | undefined): string | undefined {
+  if (!ip) return undefined;
+  
+  // Handle multiple IPs (x-forwarded-for can contain a list)
+  const firstIP = ip.split(',')[0].trim();
+  
+  // IPv6
+  if (firstIP.includes(':')) {
+    const parts = firstIP.split(':');
+    if (parts.length > 2) {
+      return `${parts[0]}:${parts[1]}:xxxx:xxxx:xxxx:xxxx:xxxx`;
+    }
+    return 'xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:xxxx';
+  }
+  
+  // IPv4
+  const parts = firstIP.split('.');
+  if (parts.length === 4) {
+    return `${parts[0]}.${parts[1]}.x.x`;
+  }
+  
+  return 'x.x.x.x';
+}
+
+/**
  * Extracts relevant information from a request for logging
  */
 export function extractRequestInfo(request: NextRequest): RequestLogContext {
   const url = new URL(request.url);
   const headers: Record<string, string> = {};
   
-  // Extract important headers
+  // Extract important headers (excluding sensitive ones)
   const importantHeaders = [
     'content-type',
     'content-length',
-    'x-forwarded-for',
-    'x-real-ip',
     'user-agent',
   ];
+  
+  // Only include IP headers if not in production or if explicitly enabled
+  if (process.env.NODE_ENV !== 'production' || process.env.LOG_FULL_IPS === 'true') {
+    importantHeaders.push('x-forwarded-for', 'x-real-ip');
+  }
   
   importantHeaders.forEach(header => {
     const value = request.headers.get(header);
     if (value) headers[header] = value;
   });
 
-  // Extract query parameters
+  // Extract query parameters (be careful not to log sensitive params)
   const query: Record<string, string> = {};
+  const sensitiveParams = ['token', 'password', 'secret', 'key', 'auth'];
   url.searchParams.forEach((value, key) => {
-    query[key] = value;
+    if (sensitiveParams.some(param => key.toLowerCase().includes(param))) {
+      query[key] = '[REDACTED]';
+    } else {
+      query[key] = value;
+    }
   });
+
+  // Get IP for logging (redacted in production)
+  const rawIP = request.headers.get('x-forwarded-for') || 
+               request.headers.get('x-real-ip');
+  const ip = process.env.NODE_ENV === 'production' && process.env.LOG_FULL_IPS !== 'true'
+    ? redactIP(rawIP)
+    : rawIP || undefined;
 
   return {
     method: request.method,
@@ -52,9 +96,7 @@ export function extractRequestInfo(request: NextRequest): RequestLogContext {
     query,
     headers,
     userAgent: request.headers.get('user-agent') || undefined,
-    ip: request.headers.get('x-forwarded-for') || 
-        request.headers.get('x-real-ip') || 
-        undefined,
+    ip,
   };
 }
 

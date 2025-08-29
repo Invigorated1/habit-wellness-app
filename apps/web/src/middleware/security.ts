@@ -31,19 +31,24 @@ const securityHeaders = {
  * Generate Content Security Policy directives
  */
 function generateCSP(): string {
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  
   const directives = {
     'default-src': ["'self'"],
     'script-src': [
       "'self'",
-      "'unsafe-inline'", // Next.js requires this for now
-      "'unsafe-eval'", // Required for development
+      // TODO: In future, implement nonce-based CSP for Next.js
+      // For now, we need unsafe-inline for Next.js hydration
+      "'unsafe-inline'", 
+      // Only allow unsafe-eval in development
+      isDevelopment ? "'unsafe-eval'" : '',
       'https://clerk.com',
       'https://*.clerk.com',
       'https://challenges.cloudflare.com',
-    ],
+    ].filter(Boolean),
     'style-src': [
       "'self'",
-      "'unsafe-inline'", // Required for Tailwind/emotion
+      "'unsafe-inline'", // Required for Tailwind/CSS-in-JS
       'https://fonts.googleapis.com',
     ],
     'font-src': [
@@ -53,7 +58,8 @@ function generateCSP(): string {
     'img-src': [
       "'self'",
       'data:',
-      'https:',
+      'https://*.clerk.com',
+      'https://img.clerk.com',
       'blob:',
     ],
     'connect-src': [
@@ -62,7 +68,12 @@ function generateCSP(): string {
       'https://*.clerk.com',
       'https://api.clerk.com',
       'wss://*.clerk.com',
-      process.env.NODE_ENV === 'development' ? 'ws://localhost:*' : '',
+      // PostHog analytics
+      process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://app.posthog.com',
+      // Sentry error reporting
+      process.env.NEXT_PUBLIC_SENTRY_DSN ? new URL(process.env.NEXT_PUBLIC_SENTRY_DSN).origin : '',
+      // Development websocket
+      isDevelopment ? 'ws://localhost:*' : '',
     ].filter(Boolean),
     'frame-src': [
       "'self'",
@@ -77,11 +88,13 @@ function generateCSP(): string {
     'upgrade-insecure-requests': [],
   };
 
-  // In production, remove unsafe-eval
-  if (process.env.NODE_ENV === 'production') {
-    directives['script-src'] = directives['script-src'].filter(
-      src => src !== "'unsafe-eval'"
-    );
+  // Add stricter policies in production
+  if (!isDevelopment) {
+    // Block all mixed content
+    directives['block-all-mixed-content'] = [];
+    
+    // Add CSP violation reporting
+    directives['report-uri'] = ['/api/csp-report'];
   }
 
   return Object.entries(directives)

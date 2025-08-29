@@ -36,15 +36,33 @@ prismaClient.$use(async (params, next) => {
     return withRetry(execute, {
       maxAttempts: 3,
       retryCondition: (error) => {
-        // Retry on connection errors
-        if (error.code === 'P2024' || error.code === 'P2025') {
+        // Only retry on transient errors
+        const transientErrorCodes = [
+          'P1001', // Can't reach database server
+          'P1002', // Database server was reached but timed out
+          'P1008', // Operations timed out
+          'P1017', // Server has closed the connection
+          'P2024', // Timed out fetching a new connection from the pool
+        ];
+        
+        if (transientErrorCodes.includes(error.code)) {
+          logger.debug('Retrying transient database error', { code: error.code });
           return true;
         }
-        // Don't retry on validation errors
-        if (error.code?.startsWith('P2')) {
+        
+        // Don't retry on any other Prisma errors (including P2025 - record not found)
+        if (error.code?.startsWith('P')) {
           return false;
         }
-        return true;
+        
+        // Retry on network errors
+        if (error.message?.includes('ECONNREFUSED') || 
+            error.message?.includes('ETIMEDOUT') ||
+            error.message?.includes('ECONNRESET')) {
+          return true;
+        }
+        
+        return false;
       },
     });
   }

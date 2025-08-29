@@ -6,6 +6,16 @@ import { withErrorHandler, successResponse } from '@/lib/api-handler';
 
 // This is a test endpoint to verify habits CRUD operations
 export const GET = withErrorHandler(async () => {
+  // Block this endpoint based on configuration
+  const { securityConfig } = await import('@/lib/config/security');
+  if (securityConfig.isProduction && !securityConfig.enableTestEndpoints) {
+    logger.warn('Attempted to access test endpoint in production');
+    return NextResponse.json(
+      { error: 'This endpoint is not available in production' },
+      { status: 403 }
+    );
+  }
+
   const user = await getOrCreateUser();
   
   logger.info('Running habit CRUD tests', { userId: user.id });
